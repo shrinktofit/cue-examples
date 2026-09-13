@@ -1,0 +1,27 @@
+{
+  "name": "@bsgames/cue-example-basic",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node --run compile:cue",
+    "compile:cue": "node --run compile:flex && node --run compile:text",
+    "compile:flex": "cue compile src/flex-playground.cue --out-dir=src/generated/cue",
+    "compile:text": "cue compile src/text-playground.cue --out-dir=src/generated/cue",
+    "test": "node scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@bsgames/cue": "link:../../cc-extension-cue/packages/runtime"
+  },
+  "devDependencies": {
+    "@bsgames/cue-cli": "link:../../cc-extension-cue/packages/cli"
+  },
+  "creator": {
+    "version": "3.8.7"
+  },
+  "uuid": "8477006b-5cd2-40c7-bd90-04e2f6e44b41",
+  "vortex": {
+    "name": "CueBasic",
+    "type": "3d"
+  }
+}

@@ -1,0 +1,19 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  basic:
+    dependencies:
+      '@bsgames/cue':
+        specifier: link:../../cc-extension-cue/packages/runtime
+        version: link:../../cc-extension-cue/packages/runtime
+    devDependencies:
+      '@bsgames/cue-cli':
+        specifier: link:../../cc-extension-cue/packages/cli
+        version: link:../../cc-extension-cue/packages/cli
