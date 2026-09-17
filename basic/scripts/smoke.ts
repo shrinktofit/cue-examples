@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { calculateFittedOrthoHeight } from '../src/calculate-fitted-ortho-height.ts';
 import flexPlayground from '../src/generated/cue/flex-playground.cue.js';
+import imagePlayground from '../src/generated/cue/image-playground.cue.js';
 import textPlayground from '../src/generated/cue/text-playground.cue.js';
 import {
   CueElement,
+  CueImageElement,
   CueRootElement,
   createCueRenderer,
   defineComponent,
@@ -44,8 +46,10 @@ assert.ok(
     >= safeArea.width - 1e-9,
 );
 
-const selectedPage = ref<'flex' | 'text'>('flex');
+const selectedPage = ref<'flex' | 'image' | 'text'>('flex');
 const direction = ref('direction-row');
+const imageSize = ref('size-intrinsic');
+const imageSource = ref('relative');
 const text = ref('  leading  spaces\nsecond\tcolumn  ');
 const renderer = createCueRenderer();
 const root = new CueRootElement();
@@ -70,18 +74,25 @@ const gallery = defineComponent(() => () => (
         'margin-normal',
       ],
     })
-    : h(textPlayground, {
-      text: text.value,
-      textClasses: [
-        'white-space-pre-wrap',
-        'width-200',
-        'text-align-center',
-        'font-size-20',
-        'line-height-28',
-        'font-family-monospace',
-        'text-color-sky',
-      ],
-    })
+    : selectedPage.value === 'text'
+      ? h(textPlayground, {
+        text: text.value,
+        textClasses: [
+          'white-space-pre-wrap',
+          'width-200',
+          'text-align-center',
+          'font-size-20',
+          'line-height-28',
+          'font-family-monospace',
+          'text-color-sky',
+        ],
+      })
+      : h(imagePlayground, {
+        imageClasses: [
+          imageSize.value,
+        ],
+        source: imageSource.value,
+      })
 ));
 const app = renderer.createApp(gallery);
 app.mount(root);
@@ -120,6 +131,31 @@ await nextTick();
 assert.equal(root.children[0], textElement);
 assert.equal(countElements(textElement), 2);
 assert.equal(collectText(textElement), text.value);
+
+/// @case The gallery switches to Image with the relative-path source and intrinsic sizing.
+/// @expect The isolated page contains one builtin CueImageElement and no Flex or Text content.
+selectedPage.value = 'image';
+await nextTick();
+
+const imageElement = root.children[0];
+assert.ok(imageElement instanceof CueElement);
+assert.equal(countElements(imageElement), 3);
+assert.equal(collectText(imageElement), '');
+const imageStage = imageElement.children[0];
+assert.ok(imageStage instanceof CueElement);
+const relativeImage = imageStage.children[0];
+assert.ok(relativeImage instanceof CueImageElement);
+
+/// @case The Image page switches to its explicit UUID source and stretched size preset.
+/// @expect Vue replaces the keyed image while preserving the Image Gallery page root.
+imageSource.value = 'uuid';
+imageSize.value = 'size-stretch';
+await nextTick();
+
+assert.equal(root.children[0], imageElement);
+const uuidImage = imageStage.children[0];
+assert.ok(uuidImage instanceof CueImageElement);
+assert.notEqual(uuidImage, relativeImage);
 
 app.unmount();
 assert.deepEqual(root.children, []);

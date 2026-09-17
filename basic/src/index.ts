@@ -1,4 +1,5 @@
 import flexPlayground from './generated/cue/flex-playground.cue.js';
+import imagePlayground from './generated/cue/image-playground.cue.js';
 import textPlayground from './generated/cue/text-playground.cue.js';
 import { calculateFittedOrthoHeight } from './calculate-fitted-ortho-height.ts';
 import {
@@ -32,6 +33,8 @@ import {
 enum ControlScope {
   container = 'container',
   featuredItem = 'featured-item',
+  image = 'image',
+  imageSource = 'image-source',
   text = 'text',
   textContent = 'text-content',
 }
@@ -43,6 +46,7 @@ enum ControlPresentation {
 
 enum GalleryPage {
   flex = 'flex',
+  image = 'image',
   text = 'text',
 }
 
@@ -330,6 +334,29 @@ const textGalleryControlSpecs: readonly GalleryControlSpec[] = [
   },
 ];
 
+const imageGalleryControlSpecs: readonly GalleryControlSpec[] = [
+  {
+    property: 'src',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.imageSource,
+    options: [
+      { label: 'relative', value: 'relative' },
+      { label: 'uuid:', value: 'uuid' },
+    ],
+  },
+  {
+    property: 'size',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.image,
+    options: [
+      { label: 'intrinsic', value: 'size-intrinsic' },
+      { label: 'width 120', value: 'size-width' },
+      { label: 'height 120', value: 'size-height' },
+      { label: '180 × 100', value: 'size-stretch' },
+    ],
+  },
+];
+
 function createGalleryControls(
   specs: readonly GalleryControlSpec[],
 ): GalleryControl[] {
@@ -358,12 +385,19 @@ function mountCueExample(scene: Scene): void {
 
   const selectedPage = ref(GalleryPage.flex);
   const flexControls = createGalleryControls(flexGalleryControlSpecs);
+  const imageControls = createGalleryControls(imageGalleryControlSpecs);
   const textControls = createGalleryControls(textGalleryControlSpecs);
   const textContentControl = textControls.find(
     control => control.scope === ControlScope.textContent,
   );
   if (!textContentControl) {
     throw new Error('Text playground requires a sample control.');
+  }
+  const imageSourceControl = imageControls.find(
+    control => control.scope === ControlScope.imageSource,
+  );
+  if (!imageSourceControl) {
+    throw new Error('Image playground requires a source control.');
   }
   const galleryComponent = defineComponent(() => () => (
     selectedPage.value === GalleryPage.flex
@@ -375,12 +409,19 @@ function mountCueExample(scene: Scene): void {
           .filter(control => control.scope === ControlScope.featuredItem)
           .map(control => control.selected.value),
       })
-      : h(textPlayground, {
-        text: textContentControl.selected.value,
-        textClasses: textControls
-          .filter(control => control.scope === ControlScope.text)
-          .map(control => control.selected.value),
-      })
+      : selectedPage.value === GalleryPage.text
+        ? h(textPlayground, {
+          text: textContentControl.selected.value,
+          textClasses: textControls
+            .filter(control => control.scope === ControlScope.text)
+            .map(control => control.selected.value),
+        })
+        : h(imagePlayground, {
+          imageClasses: imageControls
+            .filter(control => control.scope === ControlScope.image)
+            .map(control => control.selected.value),
+          source: imageSourceControl.selected.value,
+        })
   ));
   const cueNode = new Node('Cue Gallery');
   cueNode.setPosition(-450, 180, 0);
@@ -391,6 +432,7 @@ function mountCueExample(scene: Scene): void {
     camera,
     selectedPage,
     flexControls,
+    imageControls,
     textControls,
   );
   const fitPlaygroundCameras = (): void => {
@@ -408,7 +450,7 @@ function mountCueExample(scene: Scene): void {
     screen.off('window-resize', fitPlaygroundCameras);
   });
 
-  console.log('[cue-basic] Flex and Text playgrounds mounted');
+  console.log('[cue-basic] Flex, Text, and Image playgrounds mounted');
 }
 
 function mountGalleryControls(
@@ -416,6 +458,7 @@ function mountGalleryControls(
   mainCamera: Camera,
   selectedPage: Ref<GalleryPage>,
   flexControls: readonly GalleryControl[],
+  imageControls: readonly GalleryControl[],
   textControls: readonly GalleryControl[],
 ): Camera {
   const cameraNode = new Node('Gallery UI Camera');
@@ -452,8 +495,15 @@ function mountGalleryControls(
     'One text box + composable typography controls',
     textControls,
   );
+  const imagePanel = createGalleryControlPanel(
+    controlX,
+    'Image Playground',
+    'One cue-image + source and sizing controls',
+    imageControls,
+  );
   canvasNode.addChild(flexPanel);
   canvasNode.addChild(textPanel);
+  canvasNode.addChild(imagePanel);
 
   const pages = [
     {
@@ -465,6 +515,11 @@ function mountGalleryControls(
       label: 'Text',
       panel: textPanel,
       value: GalleryPage.text,
+    },
+    {
+      label: 'Image',
+      panel: imagePanel,
+      value: GalleryPage.image,
     },
   ] as const;
   const pageButtons: Node[] = [];

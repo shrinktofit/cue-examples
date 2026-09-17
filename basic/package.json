@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "node --run compile:cue",
-    "compile:cue": "node --run compile:flex && node --run compile:text",
+    "compile:cue": "node --run compile:flex && node --run compile:text && node --run compile:image",
     "compile:flex": "cue compile src/flex-playground.cue --out-dir=src/generated/cue",
+    "compile:image": "cue compile src/image-playground.cue --out-dir=src/generated/cue",
     "compile:text": "cue compile src/text-playground.cue --out-dir=src/generated/cue",
     "test": "node scripts/smoke.ts"
   },
