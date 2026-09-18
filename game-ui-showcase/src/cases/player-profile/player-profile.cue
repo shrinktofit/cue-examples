@@ -42,12 +42,12 @@ watchEffect(() => {
         <div ref="experienceValue" class="experience-value">
           {{ experience }}/{{ experienceMax }}
         </div>
-        <cue-image class="level-badge" src="../../assets/player-profile/level-background.png" />
+        <cue-image class="level-badge" src="../../../assets/player-profile/level-background.png" />
         <div ref="levelValue" class="level-value">{{ level }}</div>
         <div ref="playerNameLabel" class="player-name">
           {{ playerName }}
         </div>
-        <cue-image class="player-avatar" src="../../assets/player-profile/default-avatar.png" />
+        <cue-image class="player-avatar" src="../../../assets/player-profile/default-avatar.png" />
       </div>
     </div>
     <div class="stage-note">Change the profile controls to update the same HUD.</div>

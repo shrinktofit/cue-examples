@@ -13,9 +13,12 @@ Cocos UI provides the case tabs and example state controls.
 The source `.cue` files compile through cue-cli into the ignored `src/generated/cue` directory.
 The project uses the same OMS module-loading path as the basic galleries.
 
+Each case lives in its own directory under `src/cases/`, even when it contains only one source file.
+
 ## Player profile
 
 The first case reproduces a lobby player HUD: avatar, name, experience bar and level badge.
+Its source is [player-profile.cue](src/cases/player-profile/player-profile.cue).
 Select a short/long/Chinese nickname, choose a level, drag the experience slider, or use 0/50/100% presets.
 The experience meter's width is assigned through a template ref with `element.style.width = Length.percent(...)`;
 its label updates with the same state. The long-name preset assigns a numeric `fontSize` in pixels.
