@@ -25,6 +25,8 @@ export function createShowcaseState() {
     return selected;
   });
   const playerName = ref('星际旅行者');
+  const hudWidth = ref(480);
+  const nameFontSize = ref(24);
   const level = ref(89);
   const experience = ref(635);
   const experienceMax = 1617;
@@ -33,6 +35,8 @@ export function createShowcaseState() {
     selectedCase,
     currentCase,
     playerName,
+    hudWidth,
+    nameFontSize,
     level,
     experience,
     experienceMax,

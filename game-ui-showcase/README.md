@@ -20,12 +20,22 @@ Each case lives in its own directory under `src/cases/`, even when it contains o
 The first case reproduces a lobby player HUD: avatar, name, experience bar and level badge.
 Its source is [player-profile.cue](src/cases/player-profile/player-profile.cue).
 Select a short/long/Chinese nickname, choose a level, drag the experience slider, or use 0/50/100% presets.
+Inline choices also control the HUD width (360/480/620 px) and nickname font size (18/24/32 px).
 The experience meter's width is assigned through a template ref with `element.style.width = Length.percent(...)`;
-its label updates with the same state. The long-name preset assigns a numeric `fontSize` in pixels.
+its label updates with the same state. HUD width and nickname font size use numeric style API values in pixels.
 
-The HUD uses CSS absolute positioning, overlapping SpriteFrames, imported TTF fonts,
-font weight and Cue text stroke. Its source canvas is 404 by 108 units.
+The HUD is a Flex row: avatar, a flexible column containing the nickname and experience meter, and level badge.
+Long names wrap at the selected font size; the HUD and surrounding frame grow with their content.
+Only the experience and level labels use absolute positioning to overlay their respective artwork.
+Negative margins retain the avatar/badge overlaps without fixing the information column's position or width.
 The surrounding frame is presentation space for the example, not another game screen.
+
+To verify reactivity, select the long nickname and 32 px font, then switch between 360 and 620 px widths.
+The nickname should wrap and unwrap without shrinking its font or recreating the HUD.
+At 360 px with the requested Microsoft YaHei UI font, all three lines must remain fully visible above the meter;
+the last line must not be covered by the track. This also checks padded text measurement during Flex reflow.
+Move the experience slider to check that the fill and digits update together at every width.
+The case retains overlapping SpriteFrames, imported TTF fonts, font weight and Cue text stroke.
 
 `src/showcase-state.ts` owns the case registry and selection state. Each registry entry produces a tab
 and selects its Cue component. Only Player profile is registered initially; add complete cases there

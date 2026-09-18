@@ -13,7 +13,7 @@ Case tabs select the examples; Cocos UI provides their state controls. The image
 
 | Preview | Description |
 | --- | --- |
-| ![Player profile HUD](docs/showcase/player-profile-hud.png) | **[Player profile](game-ui-showcase/src/cases/player-profile/player-profile.cue)** — A lobby HUD with an avatar, nickname, level badge, and live experience bar. Nickname, level, and experience can be changed interactively. |
+| ![Player profile HUD](docs/showcase/player-profile-hud.png) | **[Player profile](game-ui-showcase/src/cases/player-profile/player-profile.cue)** — A reactive lobby HUD with an avatar, nickname, level badge, and live experience bar. Change the nickname, font size, or width to see Flex reflow and text wrapping; level and experience update in place. |
 
 ## Local setup
 

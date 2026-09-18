@@ -46,6 +46,8 @@ async function mountShowcase(scene: Scene): Promise<void> {
   const state = createShowcaseState();
   const component = defineComponent(() => () => h(state.currentCase.value.component, {
     playerName: state.playerName.value,
+    hudWidth: state.hudWidth.value,
+    nameFontSize: state.nameFontSize.value,
     level: state.level.value,
     experience: state.experience.value,
     experienceMax: state.experienceMax,
@@ -102,35 +104,55 @@ async function mountShowcase(scene: Scene): Promise<void> {
   panel.setPosition(385, 0);
   canvasNode.addChild(panel);
   const title = createLabel('PROFILE STATE', 16, 290, 30, new Color(183, 255, 0));
-  title.setPosition(0, 155);
+  title.setPosition(0, 225);
   panel.addChild(title);
   const nickname = createLabel('', 15, 290, 32);
-  nickname.setPosition(0, 112);
+  nickname.setPosition(0, 182);
   panel.addChild(nickname);
   const names = ['星际旅行者', 'Nova', '一位名字很长的太空探险家'];
   for (const [index, name] of names.entries()) {
     const button = createButton(index === 0 ? '中文' : index === 1 ? 'Latin' : 'Long name', 90, 30, () => {
       state.playerName.value = name;
     });
-    button.setPosition(-96 + index * 96, 72);
+    button.setPosition(-96 + index * 96, 148);
     panel.addChild(button);
   }
+  const hudWidth = createLabel('', 15, 290, 28);
+  hudWidth.setPosition(0, 104);
+  panel.addChild(hudWidth);
+  const widthButtons: Array<{ value: number; node: Node }> = [];
+  for (const [index, value] of [360, 480, 620].entries()) {
+    const button = createButton(`${value} px`, 90, 30, () => { state.hudWidth.value = value; });
+    button.setPosition(-96 + index * 96, 72);
+    panel.addChild(button);
+    widthButtons.push({ value, node: button });
+  }
+  const nameFontSize = createLabel('', 15, 290, 28);
+  nameFontSize.setPosition(0, 28);
+  panel.addChild(nameFontSize);
+  const fontSizeButtons: Array<{ value: number; node: Node }> = [];
+  for (const [index, value] of [18, 24, 32].entries()) {
+    const button = createButton(`${value} px`, 90, 30, () => { state.nameFontSize.value = value; });
+    button.setPosition(-96 + index * 96, -4);
+    panel.addChild(button);
+    fontSizeButtons.push({ value, node: button });
+  }
   const level = createLabel('', 15, 290, 28);
-  level.setPosition(0, 26);
+  level.setPosition(0, -48);
   panel.addChild(level);
   for (const [index, value] of [1, 42, 89].entries()) {
     const button = createButton(String(value), 90, 30, () => { state.level.value = value; });
-    button.setPosition(-96 + index * 96, -8);
+    button.setPosition(-96 + index * 96, -80);
     panel.addChild(button);
   }
   const experience = createLabel('', 14, 290, 28);
-  experience.setPosition(0, -54);
+  experience.setPosition(0, -124);
   panel.addChild(experience);
 
   const sliderNode = new Node('Experience Slider');
   sliderNode.layer = Layers.Enum.UI_2D;
   sliderNode.addComponent(UITransform).setContentSize(260, 26);
-  sliderNode.setPosition(0, -92);
+  sliderNode.setPosition(0, -162);
   const track = sliderNode.addComponent(Graphics);
   track.fillColor = new Color(51, 65, 85);
   track.roundRect(-130, -3, 260, 6, 3);
@@ -159,15 +181,23 @@ async function mountShowcase(scene: Scene): Promise<void> {
       state.experience.value = Math.round(ratio * state.experienceMax);
       slider.progress = state.experienceRatio.value;
     });
-    button.setPosition(-96 + index * 96, -138);
+    button.setPosition(-96 + index * 96, -204);
     panel.addChild(button);
   }
   const stopWatching = watch(
-    [state.playerName, state.level, state.experience],
+    [state.playerName, state.hudWidth, state.nameFontSize, state.level, state.experience],
     () => {
       nickname.getComponent(Label)!.string = state.playerName.value;
+      hudWidth.getComponent(Label)!.string = `HUD width ${state.hudWidth.value} px`;
+      nameFontSize.getComponent(Label)!.string = `Name size ${state.nameFontSize.value} px`;
       level.getComponent(Label)!.string = `Level ${state.level.value}`;
       experience.getComponent(Label)!.string = `Experience ${state.experience.value} / ${state.experienceMax}`;
+      for (const choice of widthButtons) {
+        paintButton(choice.node, 90, 30, choice.value === state.hudWidth.value);
+      }
+      for (const choice of fontSizeButtons) {
+        paintButton(choice.node, 90, 30, choice.value === state.nameFontSize.value);
+      }
     },
     { immediate: true },
   );
@@ -209,6 +239,11 @@ function paintButton(node: Node, width: number, height: number, selected: boolea
   graphics.fillColor = selected ? new Color(72, 82, 40) : new Color(30, 41, 59);
   graphics.roundRect(-width / 2, -height / 2, width, height, 6);
   graphics.fill();
+  if (selected) {
+    graphics.strokeColor = new Color(183, 255, 0);
+    graphics.lineWidth = 1.5;
+    graphics.stroke();
+  }
 }
 
 function createButton(text: string, width: number, height: number, onClick: () => void): Node {
