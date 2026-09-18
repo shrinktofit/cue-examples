@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { CueElement, CueImageElement, CueRootElement, Length, LengthUnit, Text, createCueRenderer, defineComponent, h, nextTick, type CueNode } from '@bsgames/cue';
+import { CueElement, CueEvent, CueImageElement, CueRootElement, Length, LengthUnit, Text, createCueRenderer, defineComponent, h, nextTick, type CueNode } from '@bsgames/cue';
 import { createShowcaseState, showcaseCases } from '../src/showcase-state.ts';
 
 function textContent(node: CueNode): string {
@@ -30,6 +30,7 @@ const app = createCueRenderer().createApp(defineComponent(() => () => h(state.cu
   hudWidth: state.hudWidth.value,
   nameFontSize: state.nameFontSize.value,
   fonts: { level: 'sans-serif', numbers: 'sans-serif' },
+  'onUpdate:experience': (value: number) => { state.experience.value = value; },
 })));
 app.mount(root);
 await nextTick();
@@ -95,6 +96,20 @@ for (const value of [0, state.experienceMax]) {
   assert.deepEqual(experienceFill.style.width, Length.percent(value / state.experienceMax * 100));
   assertRetainedElements(root, initialElements);
 }
+
+/// @case The Cue avatar is clicked twice.
+/// @expect Vue shows current profile details, then closes them without recreating the original HUD.
+const avatar = hud.children.find(element => element instanceof CueImageElement);
+assert.ok(avatar instanceof CueImageElement);
+avatar.dispatchEvent(new CueEvent('click', { bubbles: true }));
+await nextTick();
+assert.ok(textContent(root).includes('Nova · Level 42'));
+assert.ok(textContent(root).includes(`Experience ${state.experience.value} / ${state.experienceMax}`));
+assert.equal(root.children[0], mountedCase);
+avatar.dispatchEvent(new CueEvent('click', { bubbles: true }));
+await nextTick();
+assert.ok(!textContent(root).includes('Nova · Level 42'));
+assertRetainedElements(root, initialElements);
 
 /// @case Every registered tab is selected.
 /// @expect Selection chooses a real case component; unmount leaves no retained visual nodes.

@@ -2,12 +2,15 @@ import assert from 'node:assert/strict';
 import { calculateFittedOrthoHeight } from '../src/calculate-fitted-ortho-height.ts';
 import flexPlayground from '../src/generated/cue/flex-playground.cue.js';
 import imagePlayground from '../src/generated/cue/image-playground.cue.js';
+import inputPlayground from '../src/generated/cue/input-playground.cue.js';
 import styleApiPlayground from '../src/generated/cue/style-api-playground.cue.js';
 import positionPlayground from '../src/generated/cue/position-playground.cue.js';
 import textPlayground from '../src/generated/cue/text-playground.cue.js';
 import {
   CueElement,
+  CueEvent,
   CueImageElement,
+  CuePointerEvent,
   CueRootElement,
   createCueRenderer,
   defineComponent,
@@ -167,7 +170,7 @@ assert.ok(uuidImage instanceof CueImageElement);
 assert.notEqual(uuidImage, relativeImage);
 
 app.unmount();
-assert.deepEqual(root.children, []);
+assert.equal(root.children.length, 0);
 
 /// @case The Position page switches B from absolute to relative.
 /// @expect The same A/B/C case remains mounted without content from another gallery.
@@ -224,10 +227,82 @@ styleImportant.value = true;
 await nextTick();
 assert.ok(collectText(root).includes('75% !important'));
 styleApp.unmount();
-assert.deepEqual(root.children, []);
+assert.equal(root.children.length, 0);
 
 function textContentWithoutSpaces(node: CueNode): string {
   return collectText(node).replaceAll(/\s/g, '');
 }
+
+function findTextElement(node: CueNode, text: string): CueElement | undefined {
+  if (!(node instanceof CueElement)) return undefined;
+  if (node.children.some(child => child instanceof Text && child.data.trim() === text)) return node;
+  for (const child of node.children) {
+    const found = findTextElement(child, text);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+/// @case Cue receives click and hover events through its public element API.
+/// @expect Local Vue state updates while the Input Gallery stays mounted.
+const inputMode = ref('click');
+const stopPropagation = ref(false);
+const inputApp = renderer.createApp(defineComponent(() => () => h(inputPlayground, {
+  mode: inputMode.value,
+  capture: true,
+  stopPropagation: stopPropagation.value,
+  frontPointerEvents: 'auto',
+  clipped: true,
+  transformed: true,
+})));
+inputApp.mount(root);
+await nextTick();
+const inputRoot = root.children[0];
+const clickTarget = findTextElement(root, 'Clicks: 0');
+assert.ok(clickTarget);
+clickTarget.dispatchEvent(new CueEvent('click', { bubbles: true }));
+clickTarget.dispatchEvent(new CuePointerEvent('pointerenter'));
+await nextTick();
+assert.equal(root.children[0], inputRoot);
+assert.ok(collectText(root).includes('Clicks: 1'));
+assert.ok(collectText(root).includes('Pointer inside'));
+clickTarget.dispatchEvent(new CuePointerEvent('pointerleave'));
+await nextTick();
+assert.ok(collectText(root).includes('Pointer outside'));
+
+/// @case A nested Cue button bubbles, a once-listener is clicked twice, then .stop is enabled.
+/// @expect Capture precedes target and bubble; once fires once; .stop prevents the parent bubble.
+inputMode.value = 'propagation';
+await nextTick();
+const innerTarget = findTextElement(root, 'Inner bubble');
+assert.ok(innerTarget);
+innerTarget.dispatchEvent(new CueEvent('click', { bubbles: true }));
+await nextTick();
+assert.ok(collectText(root).trim().endsWith('capture: parent\ntarget: inner\nbubble: parent'));
+const onceTarget = findTextElement(root, 'Once: 0');
+assert.ok(onceTarget);
+onceTarget.dispatchEvent(new CueEvent('click', { bubbles: true }));
+onceTarget.dispatchEvent(new CueEvent('click', { bubbles: true }));
+await nextTick();
+assert.ok(collectText(root).includes('Once: 1'));
+stopPropagation.value = true;
+await nextTick();
+const stoppedTarget = findTextElement(root, 'Inner .stop');
+assert.ok(stoppedTarget);
+stoppedTarget.dispatchEvent(new CueEvent('click', { bubbles: true }));
+await nextTick();
+assert.ok(collectText(root).trim().endsWith('capture: parent\ntarget: stopped'));
+
+/// @case Input Gallery switches to drag and hit-region demonstrations.
+/// @expect Every mode is isolated within the same gallery root and unmount removes all nodes.
+for (const [mode, expectedText] of [['drag', 'Drag beyond this border'], ['hit', 'Front: 0']]) {
+  inputMode.value = mode;
+  await nextTick();
+  assert.equal(root.children[0], inputRoot);
+  assert.ok(collectText(root).includes(expectedText));
+  assert.ok(!collectText(root).includes('Inner .stop'));
+}
+inputApp.unmount();
+assert.equal(root.children.length, 0);
 
 console.log('[cue-basic-smoke] passed');

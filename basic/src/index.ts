@@ -1,6 +1,7 @@
 import decorationPlayground from './generated/cue/decoration-playground.cue.js';
 import flexPlayground from './generated/cue/flex-playground.cue.js';
 import imagePlayground from './generated/cue/image-playground.cue.js';
+import inputPlayground from './generated/cue/input-playground.cue.js';
 import styleApiPlayground from './generated/cue/style-api-playground.cue.js';
 import positionPlayground from './generated/cue/position-playground.cue.js';
 import textPlayground from './generated/cue/text-playground.cue.js';
@@ -40,6 +41,7 @@ enum ControlScope {
   featuredItem = 'featured-item',
   image = 'image',
   imageSource = 'image-source',
+  input = 'input',
   position = 'position',
   styleApi = 'style-api',
   text = 'text',
@@ -56,6 +58,7 @@ enum GalleryPage {
   decoration = 'decoration',
   flex = 'flex',
   image = 'image',
+  input = 'input',
   styleApi = 'style-api',
   position = 'position',
   text = 'text',
@@ -469,6 +472,50 @@ const imageGalleryControlSpecs: readonly GalleryControlSpec[] = [
   },
 ];
 
+const inputGalleryControlSpecs: readonly GalleryControlSpec[] = [
+  {
+    property: 'example',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.input,
+    options: [
+      { label: 'click / hover', value: 'click' },
+      { label: 'propagation', value: 'propagation' },
+      { label: 'drag', value: 'drag' },
+      { label: 'hit regions', value: 'hit' },
+    ],
+  },
+  {
+    property: 'pointer capture',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.input,
+    options: [{ label: 'on', value: 'on' }, { label: 'off', value: 'off' }],
+  },
+  {
+    property: 'propagation',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.input,
+    options: [{ label: 'bubble', value: 'bubble' }, { label: '.stop', value: 'stop' }],
+  },
+  {
+    property: 'front pointer-events',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.input,
+    options: [{ label: 'auto', value: 'auto' }, { label: 'none', value: 'none' }],
+  },
+  {
+    property: 'overflow',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.input,
+    options: [{ label: 'hidden', value: 'hidden' }, { label: 'visible', value: 'visible' }],
+  },
+  {
+    property: 'transform',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.input,
+    options: [{ label: 'rotate(18deg)', value: 'rotated' }, { label: 'none', value: 'none' }],
+  },
+];
+
 const decorationGalleryControlSpecs: readonly GalleryControlSpec[] = [
   {
     property: 'border',
@@ -603,6 +650,7 @@ async function mountCueExample(scene: Scene): Promise<void> {
   const flexControls = createGalleryControls(flexGalleryControlSpecs);
   const decorationControls = createGalleryControls(decorationGalleryControlSpecs);
   const imageControls = createGalleryControls(imageGalleryControlSpecs);
+  const inputControls = createGalleryControls(inputGalleryControlSpecs);
   const textControls = createGalleryControls(textGalleryControlSpecs);
   const positionControls = createGalleryControls(positionGalleryControlSpecs);
   const styleApiControls = createGalleryControls(styleApiGalleryControlSpecs);
@@ -620,7 +668,16 @@ async function mountCueExample(scene: Scene): Promise<void> {
     throw new Error('Image playground requires a source control.');
   }
   const galleryComponent = defineComponent(() => () => (
-    selectedPage.value === GalleryPage.position
+    selectedPage.value === GalleryPage.input
+      ? h(inputPlayground, {
+        mode: inputControls[0].selected.value,
+        capture: inputControls[1].selected.value === 'on',
+        stopPropagation: inputControls[2].selected.value === 'stop',
+        frontPointerEvents: inputControls[3].selected.value,
+        clipped: inputControls[4].selected.value === 'hidden',
+        transformed: inputControls[5].selected.value === 'rotated',
+      })
+      : selectedPage.value === GalleryPage.position
       ? h(positionPlayground, {
         positionClasses: positionControls.map(control => control.selected.value),
       })
@@ -679,6 +736,7 @@ async function mountCueExample(scene: Scene): Promise<void> {
     textControls,
     positionControls,
     styleApiControls,
+    inputControls,
   );
   const fitPlaygroundCameras = (): void => {
     const visibleSize = view.getVisibleSize();
@@ -696,7 +754,7 @@ async function mountCueExample(scene: Scene): Promise<void> {
     for (const font of importedFonts) font.dispose();
   });
 
-  console.log('[cue-basic] Flex, Text, Image, Decoration, Position, and Style API playgrounds mounted');
+  console.log('[cue-basic] Flex, Text, Image, Decoration, Position, Style API, and Input playgrounds mounted');
 }
 
 function mountGalleryControls(
@@ -709,6 +767,7 @@ function mountGalleryControls(
   textControls: readonly GalleryControl[],
   positionControls: readonly GalleryControl[],
   styleApiControls: readonly GalleryControl[],
+  inputControls: readonly GalleryControl[],
 ): Camera {
   const cameraNode = new Node('Gallery UI Camera');
   const camera = cameraNode.addComponent(Camera);
@@ -768,12 +827,19 @@ function mountGalleryControls(
     'Typed values, clearing overrides, and CSS precedence',
     styleApiControls,
   );
+  const inputPanel = createGalleryControlPanel(
+    controlX,
+    'Input Playground',
+    'Interact with Cue on the left; choose event behavior here',
+    inputControls,
+  );
   canvasNode.addChild(flexPanel);
   canvasNode.addChild(textPanel);
   canvasNode.addChild(imagePanel);
   canvasNode.addChild(decorationPanel);
   canvasNode.addChild(positionPanel);
   canvasNode.addChild(styleApiPanel);
+  canvasNode.addChild(inputPanel);
 
   const pages = [
     {
@@ -798,12 +864,13 @@ function mountGalleryControls(
     },
     { label: 'Position', panel: positionPanel, value: GalleryPage.position },
     { label: 'Style API', panel: styleApiPanel, value: GalleryPage.styleApi },
+    { label: 'Input', panel: inputPanel, value: GalleryPage.input },
   ] as const;
   const pageButtons: Node[] = [];
   const pageButtonWidth = 61;
   const pageButtonGap = 4;
   const pageButtonsLeft = controlX
-    - (pageButtonWidth * pages.length + pageButtonGap) / 2;
+    - (pageButtonWidth * pages.length + pageButtonGap * (pages.length - 1)) / 2;
   const repaintPageSelection = (): void => {
     for (const [index, page] of pages.entries()) {
       page.panel.active = page.value === selectedPage.value;

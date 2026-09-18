@@ -26,7 +26,16 @@ Case tabs select the examples; Cocos UI provides their state controls. The image
 
 The projects serve different purposes:
 
-- [basic](basic/README.md) has isolated Flex, Text, Image, Decoration, Position, and Style API galleries.
+- [basic](basic/README.md) has isolated Flex, Text, Image, Decoration, Position, Style API, and Input galleries.
 - [game-ui-showcase](game-ui-showcase/README.md) has complete game UI components selected through a tab registry.
 
 The controls use Cocos UI. The content of every gallery and showcase case is rendered by Cue.
+Input Gallery demonstrates Cue clicks, hover, propagation, pointer capture, clipping, transformed hits,
+and `pointer-events` pass-through. The player HUD's avatar toggles profile details, and its draggable
+experience meter shares state with the native controls.
+
+Saved browser regressions exercise the running projects through actual mouse/touch input:
+[`scripts/verify-input-preview.ts`](scripts/verify-input-preview.ts) checks the basic gallery, and
+[`scripts/verify-hud-input-preview.ts`](scripts/verify-hud-input-preview.ts) checks the HUD.
+Each requires a Preview URL and an explicit existing Playwright installation path. Commands and
+screenshot output are documented in the respective project READMEs; no browser dependency is added here.

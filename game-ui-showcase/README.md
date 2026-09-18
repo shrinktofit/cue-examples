@@ -21,6 +21,10 @@ The first case reproduces a lobby player HUD: avatar, name, experience bar and l
 Its source is [player-profile.cue](src/cases/player-profile/player-profile.cue).
 Select a short/long/Chinese nickname, choose a level, drag the experience slider, or use 0/50/100% presets.
 Inline choices also control the HUD width (360/480/620 px) and nickname font size (18/24/32 px).
+The Cue HUD is interactive: click the avatar to open or close profile details, and press or drag directly
+on the experience meter to update experience. Pointer capture keeps the meter active when the drag leaves
+its bounds. The meter emits `update:experience`; the shared state updates its fill, digits, detail view,
+and native Cocos slider together.
 The experience meter's width is assigned through a template ref with `element.style.width = Length.percent(...)`;
 its label updates with the same state. HUD width and nickname font size use numeric style API values in pixels.
 
@@ -35,7 +39,25 @@ The nickname should wrap and unwrap without shrinking its font or recreating the
 At 360 px with the requested Microsoft YaHei UI font, all three lines must remain fully visible above the meter;
 the last line must not be covered by the track. This also checks padded text measurement during Flex reflow.
 Move the experience slider to check that the fill and digits update together at every width.
+Also drag the Cue meter, release beyond either end, and verify the value clamps to 0 or the maximum.
+Its pointer offsets use the track's padding edge and `clientWidth`, so the same handler works after reflow;
+the fill and digits use `pointer-events: none` to keep the track as the event target.
 The case retains overlapping SpriteFrames, imported TTF fonts, font weight and Cue text stroke.
+
+The browser regression uses the already-running Showcase Preview. From the repository root:
+
+```powershell
+. 'U:\codex-prelude.ps1'
+$env:PLAYWRIGHT_BROWSERS_PATH = 'U:\AgentTools\playwright\browsers'
+node scripts/verify-hud-input-preview.ts 'http://127.0.0.1:7458/' 'U:\AgentTools\playwright\node_modules\playwright'
+```
+
+Both arguments are required: use your Preview URL and an existing Playwright installation.
+The script selects the main scene in a fresh 1440 × 850 headless browser, clicks the avatar, drags the
+Cue meter, and checks matching experience text and native slider progress. It also verifies that blur
+ends a drag and the next drag still works. Screenshots default to the ignored
+`game-ui-showcase/temp/input-preview/` directory; an optional third argument changes the output directory.
+No project browser dependency is required and the script does not launch Vortex.
 
 `src/showcase-state.ts` owns the case registry and selection state. Each registry entry produces a tab
 and selects its Cue component. Only Player profile is registered initially; add complete cases there

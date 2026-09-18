@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Length, shallowRef, watchEffect, type CueElement } from '@bsgames/cue';
+import { Length, ref, shallowRef, watchEffect, type CueElement, type CuePointerEvent } from '@bsgames/cue';
 
 const props = defineProps<{
   playerName: string;
@@ -11,11 +11,38 @@ const props = defineProps<{
   nameFontSize: number;
   fonts: { level: string; numbers: string };
 }>();
+const emit = defineEmits<{ 'update:experience': [value: number] }>();
+const showDetails = ref(false);
+const avatarHovered = ref(false);
+const experiencePointer = ref<number>();
 const profile = shallowRef<CueElement>();
 const experienceFill = shallowRef<CueElement>();
 const experienceValue = shallowRef<CueElement>();
 const levelValue = shallowRef<CueElement>();
 const playerNameLabel = shallowRef<CueElement>();
+
+function updateExperience(event: CuePointerEvent): void {
+  const ratio = Math.max(0, Math.min(1, event.offsetX / event.currentTarget!.clientWidth));
+  emit('update:experience', Math.round(ratio * props.experienceMax));
+}
+
+function beginExperienceDrag(event: CuePointerEvent): void {
+  if (!event.isPrimary || event.button !== 0) return;
+  experiencePointer.value = event.pointerId;
+  event.currentTarget!.setPointerCapture(event.pointerId);
+  updateExperience(event);
+}
+
+function moveExperienceDrag(event: CuePointerEvent): void {
+  if (experiencePointer.value === event.pointerId) updateExperience(event);
+}
+
+function endExperienceDrag(event: CuePointerEvent): void {
+  if (experiencePointer.value !== event.pointerId) return;
+  if (event.type === 'pointerup') updateExperience(event);
+  experiencePointer.value = undefined;
+  event.currentTarget!.releasePointerCapture(event.pointerId);
+}
 
 watchEffect(() => {
   if (profile.value) {
@@ -42,12 +69,25 @@ watchEffect(() => {
     <div class="stage-description">A lobby HUD composed from Cue elements</div>
     <div class="hud-frame">
       <div ref="profile" class="player-profile">
-        <cue-image class="player-avatar" src="../../../assets/player-profile/default-avatar.png" />
+        <cue-image
+          :class="['player-avatar', { 'avatar-highlight': showDetails || avatarHovered }]"
+          src="../../../assets/player-profile/default-avatar.png"
+          @click="showDetails = !showDetails"
+          @pointerenter="avatarHovered = true"
+          @pointerleave="avatarHovered = false"
+        />
         <div class="player-details">
           <div ref="playerNameLabel" class="player-name">
             {{ playerName }}
           </div>
-          <div class="experience-track">
+          <div
+            class="experience-track"
+            @pointerdown.prevent="beginExperienceDrag"
+            @pointermove="moveExperienceDrag"
+            @pointerup="endExperienceDrag"
+            @pointercancel="endExperienceDrag"
+            @lostpointercapture="experiencePointer = undefined"
+          >
             <div ref="experienceFill" class="experience-fill" />
             <div ref="experienceValue" class="experience-value">
               {{ experience }}/{{ experienceMax }}
@@ -59,8 +99,12 @@ watchEffect(() => {
           <div ref="levelValue" class="level-value">{{ level }}</div>
         </div>
       </div>
+      <div v-if="showDetails" class="profile-details">
+        <div class="profile-detail-title">{{ playerName }} · Level {{ level }}</div>
+        <div class="profile-detail-value">Experience {{ experience }} / {{ experienceMax }}</div>
+      </div>
     </div>
-    <div class="stage-note">Change the name, font size or width to reflow the same HUD.</div>
+    <div class="stage-note">Click the avatar for details. Drag the meter to change experience.</div>
   </div>
 </template>
 
@@ -126,11 +170,13 @@ watchEffect(() => {
   overflow: hidden;
 }
 .experience-fill {
+  pointer-events: none;
   height: 100%;
   background-color: #b7ff00;
   border-radius: 10px;
 }
 .experience-value {
+  pointer-events: none;
   position: absolute;
   left: 8px;
   right: 12px;
@@ -182,6 +228,20 @@ watchEffect(() => {
   flex-shrink: 0;
   z-index: 1;
 }
+.avatar-highlight { outline: 2px solid #b7ff00; outline-offset: 2px; }
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  padding: 8px 12px;
+  margin-top: 12px;
+  gap: 6px;
+  border: 1px solid #3a4960;
+  border-radius: 10px;
+  background-color: #111c2b;
+}
+.profile-detail-title { font-size: 14px; color: #e2e8f0; }
+.profile-detail-value { font-size: 12px; color: #b2c0d2; }
 .stage-note {
   font-size: 14px;
   color: #94a3b8;

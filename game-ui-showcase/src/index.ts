@@ -53,6 +53,7 @@ async function mountShowcase(scene: Scene): Promise<void> {
     experienceMax: state.experienceMax,
     experienceRatio: state.experienceRatio.value,
     fonts: { level: fonts[0].fontFamily, numbers: fonts[1].fontFamily },
+    'onUpdate:experience': (value: number) => { state.experience.value = value; },
   }));
   const cueNode = new Node('Game UI Case');
   cueNode.setPosition(-550, 160, 0);
@@ -179,7 +180,6 @@ async function mountShowcase(scene: Scene): Promise<void> {
   for (const [index, ratio] of [0, 0.5, 1].entries()) {
     const button = createButton(`${ratio * 100}%`, 90, 30, () => {
       state.experience.value = Math.round(ratio * state.experienceMax);
-      slider.progress = state.experienceRatio.value;
     });
     button.setPosition(-96 + index * 96, -204);
     panel.addChild(button);
@@ -192,6 +192,7 @@ async function mountShowcase(scene: Scene): Promise<void> {
       nameFontSize.getComponent(Label)!.string = `Name size ${state.nameFontSize.value} px`;
       level.getComponent(Label)!.string = `Level ${state.level.value}`;
       experience.getComponent(Label)!.string = `Experience ${state.experience.value} / ${state.experienceMax}`;
+      slider.progress = state.experienceRatio.value;
       for (const choice of widthButtons) {
         paintButton(choice.node, 90, 30, choice.value === state.hudWidth.value);
       }
