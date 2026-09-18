@@ -5,7 +5,14 @@
   "type": "module",
   "scripts": {
     "build": "node --run compile:cue",
-    "compile:cue": "node --run compile:flex && node --run compile:text && node --run compile:image && node --run compile:decoration && node --run compile:position && node --run compile:style && node --run compile:input",
+    "compile:cue": "node --run compile:flex && node --run compile:text && node --run compile:image && node --run compile:decoration && node --run compile:position && node --run compile:style && node --run compile:input && node --run compile:controls",
+    "compile:controls": "node --run compile:button && node --run compile:toggle && node --run compile:slider && node --run compile:select && node --run compile:text-input && node --run compile:number-input",
+    "compile:button": "cue compile src/button/button-playground.cue --out-dir=src/generated/cue",
+    "compile:toggle": "cue compile src/toggle/toggle-playground.cue --out-dir=src/generated/cue",
+    "compile:slider": "cue compile src/slider/slider-playground.cue --out-dir=src/generated/cue",
+    "compile:select": "cue compile src/select/select-playground.cue --out-dir=src/generated/cue",
+    "compile:text-input": "cue compile src/text-input/text-input-playground.cue --out-dir=src/generated/cue",
+    "compile:number-input": "cue compile src/number-input/number-input-playground.cue --out-dir=src/generated/cue",
     "compile:decoration": "cue compile src/decoration-playground.cue --out-dir=src/generated/cue",
     "compile:flex": "cue compile src/flex-playground.cue --out-dir=src/generated/cue",
     "compile:image": "cue compile src/image-playground.cue --out-dir=src/generated/cue",
@@ -13,7 +20,8 @@
     "compile:position": "cue compile src/position-playground.cue --out-dir=src/generated/cue",
     "compile:style": "cue compile src/style-api-playground.cue --out-dir=src/generated/cue",
     "compile:text": "cue compile src/text-playground.cue --out-dir=src/generated/cue",
-    "test": "node scripts/smoke.ts"
+    "test": "node scripts/smoke.ts && node scripts/control-smoke.ts",
+    "test:controls": "node scripts/control-smoke.ts"
   },
   "dependencies": {
     "@bsgames/cue": "link:../../cc-extension-cue/packages/runtime"

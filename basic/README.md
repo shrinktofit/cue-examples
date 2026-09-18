@@ -15,7 +15,9 @@ pnpm --dir U:\Repos\Bluesquall\cc-extensions\cc-extension-cue-examples\basic ins
 pnpm --dir U:\Repos\Bluesquall\cc-extensions\cc-extension-cue-examples\basic build
 ```
 
-Open assets/main.scene and start Preview. The Cocos UI control plane provides seven independent pages:
+Open assets/main.scene and start Preview. The Cocos UI control plane provides thirteen independent pages.
+The upper BASE row contains the seven foundation galleries; the lower CONTROLS row contains six
+built-in control galleries. Navigation and all controls on the right remain Cocos UI.
 
 - Flex Playground contains only the A-J Flex items and controls for their container and selected item.
 - Text Playground contains one text box with controls for its sample, white-space processing, width,
@@ -33,6 +35,81 @@ Open assets/main.scene and start Preview. The Cocos UI control plane provides se
   Dynamic styles are typed values; runtime CSS strings are not parsed.
 - Input Playground contains independent click/hover, propagation, captured drag, and hit-region examples.
   The controls remain native Cocos UI; the interactive shapes and their local Vue state belong to Cue.
+
+## Built-in control galleries
+
+Each control has its own directory and page: [Button](src/button/button-playground.cue),
+[Toggle](src/toggle/toggle-playground.cue), [Slider](src/slider/slider-playground.cue),
+[Select](src/select/select-playground.cue), [TextInput](src/text-input/text-input-playground.cue), and
+[NumberInput](src/number-input/number-input-playground.cue). These pages instantiate the actual
+`cue-button`, `cue-toggle`, `cue-slider`, `cue-select`, `cue-text-input`, and
+`cue-number-input` built-ins. They are not composed substitutes for runtime controls.
+
+Every page compares default and custom appearance. The two instances have separate values; the
+ordered event log identifies which instance emitted each event and whether input is composing.
+The custom text and number inputs use `v-model.lazy`, so their displayed model changes on commit.
+The default inputs use `v-model` and update on input. Password mode intentionally keeps the model
+visible in the verification readout.
+
+The Cocos panel sets disabled state, an external preset, the control mode and custom width.
+**Apply external value** reapplies the selected preset after editing; this must not add user
+input/change events. **Remount controls** replaces both instances and resets the log.
+For Button the preset changes its label; Toggle treats the empty preset as false, Slider as zero,
+Select and NumberInput as undefined, and TextInput as an empty string.
+
+| Page | Interactive checks |
+| --- | --- |
+| Button | Click, touch, Enter and Space; independent counters; release outside, cancel and disable without accidental activation. |
+| Toggle | Click and Space; checked styling; external boolean changes; one input/change pair per committed toggle. |
+| Slider | Pointer capture beyond either end; horizontal/vertical mode; arrow keys, Home/End; bounds 0–100 and step 5; input before final change. |
+| Select | Open, navigate, confirm, Escape and outside dismissal; restricted mode disables Engineer; popup/focus cleanup across remounts. |
+| TextInput | Selection replacement, paste, Chinese IME, single/multiline/password/read-only modes; input versus lazy commit; focus and blur. |
+| NumberInput | Empty, minus and decimal drafts; paste, step 0.5 and bounds -10–10; read-only mode; no NaN or duplicate commit. |
+
+Use the Cocos EditBox on the right to type, then click either Cue input and continue typing.
+Keyboard and IME text must reach only the current editor. While composing Chinese, Enter/Escape
+and arrow keys must not activate a different control. Switch pages or remount during editing,
+selection, a popup or a drag; the new page and native EditBox must remain usable, with no duplicate
+listeners or stale capture/composition state.
+
+After building the sibling Cue packages, regenerate these pages with `node --run build` from the
+workspace root or `node --run compile:controls` from basic. The CLI still writes ignored JavaScript
+into src/generated/cue; OMS continues to own the module graph.
+
+`node --run test:controls` from basic runs the renderer integration checks in
+[scripts/control-smoke.ts](scripts/control-smoke.ts). They verify real built-in element instances,
+external values, disabled state, event ordering, immediate/lazy model wiring, instance isolation,
+remounting and cleanup through public APIs. Pointer routing, actual keyboard focus, native input
+composition and Cocos coexistence require the running Preview checks above; the Node smoke does
+not claim to verify those platform interactions.
+
+With basic Preview already running, the saved control regression can be run from the
+workspace root without launching Vortex:
+
+```powershell
+. 'U:\codex-prelude.ps1'
+$env:PLAYWRIGHT_BROWSERS_PATH = 'U:\AgentTools\playwright\browsers'
+node scripts/verify-controls-preview.ts 'http://127.0.0.1:7457/' 'U:\AgentTools\playwright\node_modules\playwright'
+```
+
+It uses Cocos scene coordinates for native navigation, the public Cue `focus()` API for keyboard
+checks, and real browser keys/text for input. Mouse checks locate visible controls through
+actual pointer moves and public pointer-event offsets, without reading private layout objects.
+They exercise Toggle clicks, Slider capture beyond its boundary, Select option clicks and
+TextInput caret placement. Both default and custom TextInput/NumberInput instances also receive
+a first mouse click in the blank space after their initial text, followed by actual ArrowLeft,
+ArrowRight and Shift+Arrow keys, select-all and mouse drag selection. The regression checks Cue's
+public selection alongside the focused DOM editor's value and selection after queued events
+settle, including backward/forward selection and collapse. `cue-input-selection.json` preserves
+every observed selection beside the screenshots. These checks do not call `focus()` or set a
+selection programmatically. Chromium touch input separately checks Toggle activation and
+Slider capture beyond its boundary. Touch capability is enabled before Cocos loads, and the
+assertions require Cue `pointerType: touch` so synthesized mouse clicks cannot pass as touch.
+The script also checks keyboard activation, value changes,
+lazy commits, native EditBox coexistence and remounting, then captures all six pages plus the
+open Select and focused TextInput.
+An optional third argument chooses the screenshot directory. Operating-system IME composition
+still requires the manual checks above.
 
 ## Input Gallery
 

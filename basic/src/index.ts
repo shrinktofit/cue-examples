@@ -5,11 +5,18 @@ import inputPlayground from './generated/cue/input-playground.cue.js';
 import styleApiPlayground from './generated/cue/style-api-playground.cue.js';
 import positionPlayground from './generated/cue/position-playground.cue.js';
 import textPlayground from './generated/cue/text-playground.cue.js';
+import buttonPlayground from './generated/cue/button-playground.cue.js';
+import togglePlayground from './generated/cue/toggle-playground.cue.js';
+import sliderPlayground from './generated/cue/slider-playground.cue.js';
+import selectPlayground from './generated/cue/select-playground.cue.js';
+import textInputPlayground from './generated/cue/text-input-playground.cue.js';
+import numberInputPlayground from './generated/cue/number-input-playground.cue.js';
 import { calculateFittedOrthoHeight } from './calculate-fitted-ortho-height.ts';
 import {
   defineComponent,
   h,
   ref,
+  type Component,
   type Ref,
 } from '@bsgames/cue';
 import {
@@ -19,6 +26,7 @@ import {
   Color,
   director,
   Director,
+  EditBox,
   Graphics,
   Label,
   Layers,
@@ -36,6 +44,7 @@ import {
 } from '@bsgames/cue/host';
 
 enum ControlScope {
+  control = 'control',
   container = 'container',
   decoration = 'decoration',
   featuredItem = 'featured-item',
@@ -55,6 +64,12 @@ enum ControlPresentation {
 }
 
 enum GalleryPage {
+  button = 'button',
+  toggle = 'toggle',
+  slider = 'slider',
+  select = 'select',
+  textInput = 'text-input',
+  numberInput = 'number-input',
   decoration = 'decoration',
   flex = 'flex',
   image = 'image',
@@ -88,6 +103,45 @@ interface GalleryControlSpec {
   property: string;
   scope: ControlScope;
 }
+
+interface BuiltinControlGallery {
+  value: GalleryPage;
+  label: string;
+  component: Component;
+  controls: GalleryControl[];
+  externalRevision: Ref<number>;
+  generation: Ref<number>;
+}
+
+const builtinControlGallerySpecs = [
+  {
+    value: GalleryPage.button, label: 'Button', component: buttonPlayground,
+    modes: [{ label: 'short', value: 'short' }, { label: 'long label', value: 'long' }],
+  },
+  {
+    value: GalleryPage.toggle, label: 'Toggle', component: togglePlayground,
+    modes: [{ label: 'short', value: 'short' }, { label: 'long label', value: 'long' }],
+  },
+  {
+    value: GalleryPage.slider, label: 'Slider', component: sliderPlayground,
+    modes: [{ label: 'horizontal', value: 'horizontal' }, { label: 'vertical', value: 'vertical' }],
+  },
+  {
+    value: GalleryPage.select, label: 'Select', component: selectPlayground,
+    modes: [{ label: 'all roles', value: 'all' }, { label: 'restricted', value: 'restricted' }],
+  },
+  {
+    value: GalleryPage.textInput, label: 'TextInput', component: textInputPlayground,
+    modes: [
+      { label: 'single line', value: 'single' }, { label: 'multiline', value: 'multiline' },
+      { label: 'password', value: 'password' }, { label: 'read only', value: 'readonly' },
+    ],
+  },
+  {
+    value: GalleryPage.numberInput, label: 'NumberInput', component: numberInputPlayground,
+    modes: [{ label: 'editable', value: 'editable' }, { label: 'read only', value: 'readonly' }],
+  },
+] as const;
 
 const flexGalleryControlSpecs: readonly GalleryControlSpec[] = [
   {
@@ -647,6 +701,29 @@ async function mountCueExample(scene: Scene): Promise<void> {
     return;
   }
   const selectedPage = ref(GalleryPage.flex);
+  const builtinGalleries: BuiltinControlGallery[] = builtinControlGallerySpecs.map(spec => ({
+    ...spec,
+    externalRevision: ref(0),
+    generation: ref(0),
+    controls: createGalleryControls([
+      {
+        property: 'disabled', scope: ControlScope.control, presentation: ControlPresentation.inline,
+        options: [{ label: 'false', value: 'off' }, { label: 'true', value: 'on' }],
+      },
+      {
+        property: 'external value', scope: ControlScope.control, presentation: ControlPresentation.inline,
+        options: [{ label: 'first', value: 'first' }, { label: 'second', value: 'second' }, { label: 'empty / zero', value: 'empty' }],
+      },
+      {
+        property: 'mode', scope: ControlScope.control, presentation: ControlPresentation.menu,
+        options: spec.modes,
+      },
+      {
+        property: 'custom width', scope: ControlScope.control, presentation: ControlPresentation.inline,
+        options: [{ label: '280 px', value: '280' }, { label: '200 px', value: '200' }],
+      },
+    ]),
+  }));
   const flexControls = createGalleryControls(flexGalleryControlSpecs);
   const decorationControls = createGalleryControls(decorationGalleryControlSpecs);
   const imageControls = createGalleryControls(imageGalleryControlSpecs);
@@ -667,8 +744,19 @@ async function mountCueExample(scene: Scene): Promise<void> {
   if (!imageSourceControl) {
     throw new Error('Image playground requires a source control.');
   }
-  const galleryComponent = defineComponent(() => () => (
-    selectedPage.value === GalleryPage.input
+  const galleryComponent = defineComponent(() => () => {
+    const builtinGallery = builtinGalleries.find(gallery => gallery.value === selectedPage.value);
+    if (builtinGallery) {
+      return h(builtinGallery.component, {
+        key: builtinGallery.generation.value,
+        disabled: builtinGallery.controls[0].selected.value === 'on',
+        sample: builtinGallery.controls[1].selected.value,
+        mode: builtinGallery.controls[2].selected.value,
+        width: Number(builtinGallery.controls[3].selected.value),
+        externalRevision: builtinGallery.externalRevision.value,
+      });
+    }
+    return selectedPage.value === GalleryPage.input
       ? h(inputPlayground, {
         mode: inputControls[0].selected.value,
         capture: inputControls[1].selected.value === 'on',
@@ -721,7 +809,7 @@ async function mountCueExample(scene: Scene): Promise<void> {
             .map(control => control.selected.value),
           source: imageSourceControl.selected.value,
         })
-  ));
+  });
   const cueNode = new Node('Cue Gallery');
   cueNode.setPosition(-450, 180, 0);
   scene.addChild(cueNode);
@@ -737,6 +825,7 @@ async function mountCueExample(scene: Scene): Promise<void> {
     positionControls,
     styleApiControls,
     inputControls,
+    builtinGalleries,
   );
   const fitPlaygroundCameras = (): void => {
     const visibleSize = view.getVisibleSize();
@@ -768,6 +857,7 @@ function mountGalleryControls(
   positionControls: readonly GalleryControl[],
   styleApiControls: readonly GalleryControl[],
   inputControls: readonly GalleryControl[],
+  builtinGalleries: readonly BuiltinControlGallery[],
 ): Camera {
   const cameraNode = new Node('Gallery UI Camera');
   const camera = cameraNode.addComponent(Camera);
@@ -840,6 +930,65 @@ function mountGalleryControls(
   canvasNode.addChild(positionPanel);
   canvasNode.addChild(styleApiPanel);
   canvasNode.addChild(inputPanel);
+  const builtinPages = builtinGalleries.map(gallery => {
+    const panel = createGalleryControlPanel(
+      controlX,
+      `${gallery.label} Gallery`,
+      'Native Cue controls on the left; Cocos controls stay here',
+      gallery.controls,
+    );
+    const apply = createButton('Apply external value', 172, 28, new Color(2, 132, 199), () => {
+      gallery.externalRevision.value++;
+    });
+    apply.setPosition(controlX - 92, 30);
+    apply.addChild(createLabel('Apply external value', 11, new Color(241, 245, 249), 164, 24));
+    panel.addChild(apply);
+    const remount = createButton('Remount controls', 172, 28, new Color(124, 58, 237), () => {
+      gallery.generation.value++;
+    });
+    remount.setPosition(controlX + 92, 30);
+    remount.addChild(createLabel('Remount controls', 11, new Color(241, 245, 249), 164, 24));
+    panel.addChild(remount);
+    const explanation = createLabel(
+      'External writes should not emit input/change.\nRemount resets the two instances and event log.',
+      11, new Color(148, 163, 184), 370, 48,
+    );
+    explanation.setPosition(controlX, -17);
+    panel.addChild(explanation);
+    const nativeInputTitle = createLabel('COCOS EDITBOX · focus / IME comparison', 11, new Color(148, 163, 184), 370, 24);
+    nativeInputTitle.setPosition(controlX, -75);
+    panel.addChild(nativeInputTitle);
+    const nativeInput = new Node('Cocos Coexistence EditBox');
+    nativeInput.layer = Layers.Enum.UI_2D;
+    nativeInput.addComponent(UITransform).setContentSize(340, 38);
+    paintRoundedRectangle(nativeInput, 340, 38, new Color(30, 41, 59), 6);
+    const nativeLabel = createLabel('', 15, new Color(226, 232, 240), 320, 32);
+    nativeLabel.getComponent(UITransform)!.setAnchorPoint(0, 1);
+    nativeLabel.getComponent(Label)!.horizontalAlign = Label.HorizontalAlign.LEFT;
+    nativeInput.addChild(nativeLabel);
+    const placeholder = createLabel('Type here, then focus a Cue input', 13, new Color(148, 163, 184), 320, 32);
+    placeholder.getComponent(UITransform)!.setAnchorPoint(0, 1);
+    placeholder.getComponent(Label)!.horizontalAlign = Label.HorizontalAlign.LEFT;
+    nativeInput.addChild(placeholder);
+    const editBox = nativeInput.addComponent(EditBox);
+    editBox.textLabel = nativeLabel.getComponent(Label)!;
+    editBox.placeholderLabel = placeholder.getComponent(Label)!;
+    editBox.placeholder = 'Type here, then focus a Cue input';
+    editBox.inputMode = EditBox.InputMode.SINGLE_LINE;
+    nativeLabel.getComponent(Label)!.verticalAlign = Label.VerticalAlign.CENTER;
+    placeholder.getComponent(Label)!.verticalAlign = Label.VerticalAlign.CENTER;
+    editBox.string = '';
+    nativeInput.setPosition(controlX, -111);
+    panel.addChild(nativeInput);
+    const keyboardNote = createLabel(
+      'Check mouse / touch / keyboard and Chinese IME.\nSwitch pages during editing or dragging to check cleanup.',
+      11, new Color(148, 163, 184), 370, 52,
+    );
+    keyboardNote.setPosition(controlX, -169);
+    panel.addChild(keyboardNote);
+    canvasNode.addChild(panel);
+    return { label: gallery.label, panel, value: gallery.value };
+  });
 
   const pages = [
     {
@@ -865,12 +1014,13 @@ function mountGalleryControls(
     { label: 'Position', panel: positionPanel, value: GalleryPage.position },
     { label: 'Style API', panel: styleApiPanel, value: GalleryPage.styleApi },
     { label: 'Input', panel: inputPanel, value: GalleryPage.input },
+    ...builtinPages,
   ] as const;
   const pageButtons: Node[] = [];
   const pageButtonWidth = 61;
   const pageButtonGap = 4;
   const pageButtonsLeft = controlX
-    - (pageButtonWidth * pages.length + pageButtonGap * (pages.length - 1)) / 2;
+    - (pageButtonWidth * 7 + pageButtonGap * 6) / 2;
   const repaintPageSelection = (): void => {
     for (const [index, page] of pages.entries()) {
       page.panel.active = page.value === selectedPage.value;
@@ -902,8 +1052,8 @@ function mountGalleryControls(
     button.setPosition(
       pageButtonsLeft
         + pageButtonWidth / 2
-        + index * (pageButtonWidth + pageButtonGap),
-      232,
+        + (index < 7 ? index : index - 7) * (pageButtonWidth + pageButtonGap),
+      index < 7 ? 232 : -236,
     );
     button.addChild(createLabel(
       page.label,
@@ -916,6 +1066,11 @@ function mountGalleryControls(
     canvasNode.addChild(button);
   }
   repaintPageSelection();
+  for (const [caption, y] of [['BASE', 232], ['CONTROLS', -236]] as const) {
+    const groupLabel = createLabel(caption, 8, new Color(148, 163, 184), 64, 20);
+    groupLabel.setPosition(pageButtonsLeft - 39, y);
+    canvasNode.addChild(groupLabel);
+  }
   return camera;
 }
 

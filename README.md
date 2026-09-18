@@ -26,10 +26,14 @@ Case tabs select the examples; Cocos UI provides their state controls. The image
 
 The projects serve different purposes:
 
-- [basic](basic/README.md) has isolated Flex, Text, Image, Decoration, Position, Style API, and Input galleries.
+- [basic](basic/README.md) has isolated Flex, Text, Image, Decoration, Position, Style API, Input,
+  Button, Toggle, Slider, Select, TextInput, and NumberInput galleries.
 - [game-ui-showcase](game-ui-showcase/README.md) has complete game UI components selected through a tab registry.
 
 The controls use Cocos UI. The content of every gallery and showcase case is rendered by Cue.
+The six built-in control galleries each compare default and custom Cue controls, with independent
+values and event logs. Navigation, external presets, disabled/mode switches, remount actions, and
+the native EditBox used for focus/IME comparison remain Cocos UI.
 Input Gallery demonstrates Cue clicks, hover, propagation, pointer capture, clipping, transformed hits,
 and `pointer-events` pass-through. The player HUD's avatar toggles profile details, and its draggable
 experience meter shares state with the native controls.
