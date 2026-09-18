@@ -1,6 +1,8 @@
 import decorationPlayground from './generated/cue/decoration-playground.cue.js';
 import flexPlayground from './generated/cue/flex-playground.cue.js';
 import imagePlayground from './generated/cue/image-playground.cue.js';
+import styleApiPlayground from './generated/cue/style-api-playground.cue.js';
+import positionPlayground from './generated/cue/position-playground.cue.js';
 import textPlayground from './generated/cue/text-playground.cue.js';
 import { calculateFittedOrthoHeight } from './calculate-fitted-ortho-height.ts';
 import {
@@ -29,6 +31,7 @@ import {
 import { EDITOR_NOT_IN_PREVIEW } from 'cc/env';
 import {
   CueDocument,
+  loadCueFont,
 } from '@bsgames/cue/host';
 
 enum ControlScope {
@@ -37,8 +40,11 @@ enum ControlScope {
   featuredItem = 'featured-item',
   image = 'image',
   imageSource = 'image-source',
+  position = 'position',
+  styleApi = 'style-api',
   text = 'text',
   textContent = 'text-content',
+  textFont = 'text-font',
 }
 
 enum ControlPresentation {
@@ -50,6 +56,8 @@ enum GalleryPage {
   decoration = 'decoration',
   flex = 'flex',
   image = 'image',
+  styleApi = 'style-api',
+  position = 'position',
   text = 'text',
 }
 
@@ -316,12 +324,14 @@ const textGalleryControlSpecs: readonly GalleryControlSpec[] = [
   },
   {
     property: 'font-family',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.text,
+    presentation: ControlPresentation.menu,
+    scope: ControlScope.textFont,
     options: [
-      { label: 'sans', value: 'font-family-sans' },
-      { label: 'serif', value: 'font-family-serif' },
-      { label: 'mono', value: 'font-family-monospace' },
+      { label: 'sans', value: 'sans-serif' },
+      { label: 'serif', value: 'serif' },
+      { label: 'mono', value: 'monospace' },
+      { label: 'Smiley Sans TTF', value: 'smiley' },
+      { label: 'Maoken TTF', value: 'maoken' },
     ],
   },
   {
@@ -333,6 +343,105 @@ const textGalleryControlSpecs: readonly GalleryControlSpec[] = [
       { label: 'sky', value: 'text-color-sky' },
       { label: 'amber', value: 'text-color-amber' },
       { label: 'green', value: 'text-color-green' },
+    ],
+  },
+  {
+    property: 'font-weight',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.text,
+    options: [
+      { label: 'normal', value: 'font-weight-normal' },
+      { label: 'bold', value: 'font-weight-bold' },
+      { label: '300', value: 'font-weight-300' },
+      { label: '900', value: 'font-weight-900' },
+    ],
+  },
+  {
+    property: 'stroke width',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.text,
+    options: [
+      { label: '0', value: 'stroke-none' },
+      { label: '1px', value: 'stroke-1' },
+      { label: '2px', value: 'stroke-2' },
+      { label: '4px', value: 'stroke-4' },
+    ],
+  },
+  {
+    property: 'stroke color',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.text,
+    options: [
+      { label: 'dark', value: 'stroke-color-dark' },
+      { label: 'purple', value: 'stroke-color-purple' },
+      { label: 'orange', value: 'stroke-color-orange' },
+    ],
+  },
+];
+
+const positionGalleryControlSpecs: readonly GalleryControlSpec[] = [
+  {
+    property: 'position',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.position,
+    options: [
+      { label: 'absolute', value: 'position-absolute' },
+      { label: 'relative', value: 'position-relative' },
+      { label: 'static', value: 'position-static' },
+    ],
+  },
+  {
+    property: 'insets',
+    presentation: ControlPresentation.menu,
+    scope: ControlScope.position,
+    options: [
+      { label: 'top: 30px; left: 30px', value: 'anchor-top-left' },
+      { label: 'bottom: 20px; right: 20px', value: 'anchor-bottom-right' },
+      { label: 'top: 25%; left: 50%', value: 'anchor-percent' },
+      { label: 'inset: 30px 24px; auto size', value: 'anchor-stretch' },
+      { label: 'top: -12px; left: -12px', value: 'anchor-negative' },
+    ],
+  },
+];
+
+const styleApiGalleryControlSpecs: readonly GalleryControlSpec[] = [
+  {
+    property: 'style overrides',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.styleApi,
+    options: [
+      { label: 'apply', value: 'applied' },
+      { label: 'clear', value: 'cleared' },
+    ],
+  },
+  {
+    property: 'width',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.styleApi,
+    options: [
+      { label: '40%', value: '40' },
+      { label: '0', value: '0' },
+      { label: '73%', value: '73' },
+      { label: '100%', value: '100' },
+    ],
+  },
+  {
+    property: 'backgroundColor',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.styleApi,
+    options: [
+      { label: 'sky', value: 'sky' },
+      { label: 'green', value: 'green' },
+      { label: 'amber', value: 'amber' },
+    ],
+  },
+  {
+    property: 'CSS !important',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.styleApi,
+    options: [
+      { label: 'off', value: 'off' },
+      { label: 'on (75%)', value: 'on' },
     ],
   },
 ];
@@ -471,7 +580,7 @@ function createGalleryControls(
   });
 }
 
-function mountCueExample(scene: Scene): void {
+async function mountCueExample(scene: Scene): Promise<void> {
   const camera = scene.getChildByName('Main Camera')?.getComponent(Camera);
   if (!camera) {
     throw new Error('Cue basic example requires the Main Camera from assets/main.scene.');
@@ -482,11 +591,22 @@ function mountCueExample(scene: Scene): void {
   camera.node.setPosition(0, 0, 10);
   camera.node.setRotationFromEuler(0, 0, 0);
 
+  const importedFonts = await Promise.all([
+    loadCueFont('11342d73-7a73-4a45-9109-91c06e25e996'),
+    loadCueFont('a2917ae7-43ba-4f4c-8a8c-19c29116a884'),
+  ]);
+  if (!scene.isValid) {
+    for (const font of importedFonts) font.dispose();
+    return;
+  }
   const selectedPage = ref(GalleryPage.flex);
   const flexControls = createGalleryControls(flexGalleryControlSpecs);
   const decorationControls = createGalleryControls(decorationGalleryControlSpecs);
   const imageControls = createGalleryControls(imageGalleryControlSpecs);
   const textControls = createGalleryControls(textGalleryControlSpecs);
+  const positionControls = createGalleryControls(positionGalleryControlSpecs);
+  const styleApiControls = createGalleryControls(styleApiGalleryControlSpecs);
+  const textFontControl = textControls.find(control => control.scope === ControlScope.textFont)!;
   const textContentControl = textControls.find(
     control => control.scope === ControlScope.textContent,
   );
@@ -500,7 +620,18 @@ function mountCueExample(scene: Scene): void {
     throw new Error('Image playground requires a source control.');
   }
   const galleryComponent = defineComponent(() => () => (
-    selectedPage.value === GalleryPage.flex
+    selectedPage.value === GalleryPage.position
+      ? h(positionPlayground, {
+        positionClasses: positionControls.map(control => control.selected.value),
+      })
+      : selectedPage.value === GalleryPage.styleApi
+        ? h(styleApiPlayground, {
+          applied: styleApiControls[0].selected.value === 'applied',
+          width: Number(styleApiControls[1].selected.value),
+          color: styleApiControls[2].selected.value,
+          important: styleApiControls[3].selected.value === 'on',
+        })
+      : selectedPage.value === GalleryPage.flex
       ? h(flexPlayground, {
         containerClasses: flexControls
           .filter(control => control.scope === ControlScope.container)
@@ -518,6 +649,11 @@ function mountCueExample(scene: Scene): void {
         : selectedPage.value === GalleryPage.text
         ? h(textPlayground, {
           text: textContentControl.selected.value,
+          fontFamily: textFontControl.selected.value === 'smiley'
+            ? importedFonts[0].fontFamily
+            : textFontControl.selected.value === 'maoken'
+              ? importedFonts[1].fontFamily
+              : textFontControl.selected.value,
           textClasses: textControls
             .filter(control => control.scope === ControlScope.text)
             .map(control => control.selected.value),
@@ -541,6 +677,8 @@ function mountCueExample(scene: Scene): void {
     flexControls,
     imageControls,
     textControls,
+    positionControls,
+    styleApiControls,
   );
   const fitPlaygroundCameras = (): void => {
     const visibleSize = view.getVisibleSize();
@@ -555,9 +693,10 @@ function mountCueExample(scene: Scene): void {
   screen.on('window-resize', fitPlaygroundCameras);
   scene.once(Node.EventType.NODE_DESTROYED, () => {
     screen.off('window-resize', fitPlaygroundCameras);
+    for (const font of importedFonts) font.dispose();
   });
 
-  console.log('[cue-basic] Flex, Text, Image, and Decoration playgrounds mounted');
+  console.log('[cue-basic] Flex, Text, Image, Decoration, Position, and Style API playgrounds mounted');
 }
 
 function mountGalleryControls(
@@ -568,6 +707,8 @@ function mountGalleryControls(
   flexControls: readonly GalleryControl[],
   imageControls: readonly GalleryControl[],
   textControls: readonly GalleryControl[],
+  positionControls: readonly GalleryControl[],
+  styleApiControls: readonly GalleryControl[],
 ): Camera {
   const cameraNode = new Node('Gallery UI Camera');
   const camera = cameraNode.addComponent(Camera);
@@ -615,10 +756,24 @@ function mountGalleryControls(
     'One box + composable border, background, outline, and shadow controls',
     decorationControls,
   );
+  const positionPanel = createGalleryControlPanel(
+    controlX,
+    'Position Playground',
+    'Position B; A and C show normal-flow participation',
+    positionControls,
+  );
+  const styleApiPanel = createGalleryControlPanel(
+    controlX,
+    'Style API Playground',
+    'Typed values, clearing overrides, and CSS precedence',
+    styleApiControls,
+  );
   canvasNode.addChild(flexPanel);
   canvasNode.addChild(textPanel);
   canvasNode.addChild(imagePanel);
   canvasNode.addChild(decorationPanel);
+  canvasNode.addChild(positionPanel);
+  canvasNode.addChild(styleApiPanel);
 
   const pages = [
     {
@@ -641,9 +796,11 @@ function mountGalleryControls(
       panel: imagePanel,
       value: GalleryPage.image,
     },
+    { label: 'Position', panel: positionPanel, value: GalleryPage.position },
+    { label: 'Style API', panel: styleApiPanel, value: GalleryPage.styleApi },
   ] as const;
   const pageButtons: Node[] = [];
-  const pageButtonWidth = 82;
+  const pageButtonWidth = 61;
   const pageButtonGap = 4;
   const pageButtonsLeft = controlX
     - (pageButtonWidth * pages.length + pageButtonGap) / 2;
@@ -985,14 +1142,14 @@ function createLabel(
 if (!EDITOR_NOT_IN_PREVIEW) {
   const scene = director.getScene();
   if (scene) {
-    mountCueExample(scene);
+    void mountCueExample(scene);
   } else {
     director.once(Director.EVENT_AFTER_SCENE_LAUNCH, () => {
       const launchedScene = director.getScene();
       if (!launchedScene) {
         throw new Error('Cue basic example requires an active Cocos scene after launch.');
       }
-      mountCueExample(launchedScene);
+      void mountCueExample(launchedScene);
     });
   }
 }

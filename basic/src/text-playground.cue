@@ -1,13 +1,25 @@
 <script setup lang="ts">
-defineProps<{
+import { shallowRef, watchEffect, type CueElement } from '@bsgames/cue';
+
+const props = defineProps<{
   text: string;
   textClasses: readonly string[];
+  fontFamily?: string;
 }>();
+const textStage = shallowRef<CueElement>();
+
+watchEffect(() => {
+  if (textStage.value) {
+    textStage.value.style.fontFamily = props.fontFamily === undefined
+      ? undefined
+      : [props.fontFamily];
+  }
+});
 </script>
 
 <template>
   <div class="text-shell">
-    <div :class="['text-stage', textClasses]">{{ text }}</div>
+    <div ref="textStage" :class="['text-stage', textClasses]">{{ text }}</div>
   </div>
 </template>
 
@@ -144,4 +156,16 @@ defineProps<{
 .text-color-green {
   color: #34d399;
 }
+
+.font-weight-normal { font-weight: normal; }
+.font-weight-bold { font-weight: bold; }
+.font-weight-300 { font-weight: 300; }
+.font-weight-900 { font-weight: 900; }
+.stroke-none { -cue-text-stroke-width: 0; }
+.stroke-1 { -cue-text-stroke-width: 1px; }
+.stroke-2 { -cue-text-stroke-width: 2px; }
+.stroke-4 { -cue-text-stroke-width: 4px; }
+.stroke-color-dark { -cue-text-stroke-color: #020617; }
+.stroke-color-purple { -cue-text-stroke-color: #7e22ce; }
+.stroke-color-orange { -cue-text-stroke-color: #c2410c; }
 </style>

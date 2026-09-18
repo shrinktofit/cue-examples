@@ -1,0 +1,24 @@
+{
+  "name": "@bsgames/cue-example-game-ui-showcase",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "cue compile src/cases/player-profile.cue --out-dir=src/generated/cue",
+    "test": "node scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@bsgames/cue": "link:../../cc-extension-cue/packages/runtime"
+  },
+  "devDependencies": {
+    "@bsgames/cue-cli": "link:../../cc-extension-cue/packages/cli"
+  },
+  "creator": {
+    "version": "3.8.7"
+  },
+  "uuid": "72d1b025-bf05-4afc-a73d-ce398ea592dd",
+  "vortex": {
+    "name": "Cue Game UI Showcase",
+    "type": "3d"
+  }
+}

@@ -4,6 +4,7 @@ node_modules/
 */local/
 *.log
 .DS_Store
+.validation/
 */assets/oms.ts
 */assets/oms.ts.meta
 */extensions/cue/
@@ -12,6 +13,6 @@ node_modules/
 */exm-lock.local.yaml
 */src/generated/
 
-basic/build/
-basic/native/
-basic/profiles/v2/packages/
+*/build/
+*/native/
+*/profiles/v2/packages/

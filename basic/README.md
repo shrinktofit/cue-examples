@@ -15,10 +15,19 @@ pnpm --dir U:\Repos\Bluesquall\cc-extensions\cc-extension-cue-examples\basic ins
 pnpm --dir U:\Repos\Bluesquall\cc-extensions\cc-extension-cue-examples\basic build
 ```
 
-Open assets/main.scene and start Preview. The Cocos UI control plane provides three independent pages:
+Open assets/main.scene and start Preview. The Cocos UI control plane provides six independent pages:
 
 - Flex Playground contains only the A-J Flex items and controls for their container and selected item.
 - Text Playground contains one text box with controls for its sample, white-space processing, width,
-  alignment, font size, line height, font family, and color.
+  alignment, font size, line height, font family, color, font weight, and Cue text stroke.
+  Smiley Sans and Maoken source TTF assets are loaded before mounting; select them in the font-family menu.
 - Image Playground contains one `cue-image` with controls for a relative-path SpriteFrame, an
   explicit `uuid:` SpriteFrame, intrinsic sizing, one-axis proportional sizing, and explicit stretch.
+- Decoration Playground contains composable border, radius, outline, shadow, background, clipping, transform,
+  and `-cue-opacity` controls.
+- Position Playground contains A/B/C boxes. Change B's position between static, relative and absolute,
+  then choose physical insets, percentages, negative offsets, or inset-driven stretch.
+- Style API Playground changes one meter through a template ref and `element.style`.
+  Width uses `Length.percent`, color uses numeric RGBA channels, and assigning `undefined`
+  clears the overrides. A separate switch demonstrates stylesheet `!important` precedence.
+  Dynamic styles are typed values; runtime CSS strings are not parsed.

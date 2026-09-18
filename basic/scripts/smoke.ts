@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { calculateFittedOrthoHeight } from '../src/calculate-fitted-ortho-height.ts';
 import flexPlayground from '../src/generated/cue/flex-playground.cue.js';
 import imagePlayground from '../src/generated/cue/image-playground.cue.js';
+import styleApiPlayground from '../src/generated/cue/style-api-playground.cue.js';
+import positionPlayground from '../src/generated/cue/position-playground.cue.js';
 import textPlayground from '../src/generated/cue/text-playground.cue.js';
 import {
   CueElement,
@@ -10,6 +12,7 @@ import {
   createCueRenderer,
   defineComponent,
   h,
+  Length,
   nextTick,
   ref,
   Text,
@@ -51,6 +54,7 @@ const direction = ref('direction-row');
 const imageSize = ref('size-intrinsic');
 const imageSource = ref('relative');
 const text = ref('  leading  spaces\nsecond\tcolumn  ');
+const textFontFamily = ref('sans-serif');
 const renderer = createCueRenderer();
 const root = new CueRootElement();
 const gallery = defineComponent(() => () => (
@@ -77,6 +81,7 @@ const gallery = defineComponent(() => () => (
     : selectedPage.value === 'text'
       ? h(textPlayground, {
         text: text.value,
+        fontFamily: textFontFamily.value,
         textClasses: [
           'white-space-pre-wrap',
           'width-200',
@@ -126,11 +131,15 @@ assert.equal(collectText(textElement), text.value);
 /// @case The Text page's controlled sample changes.
 /// @expect Its text node updates without introducing Flex playground content.
 text.value = '中文自动换行，也可以混合 English words。';
+textFontFamily.value = 'serif';
 await nextTick();
 
 assert.equal(root.children[0], textElement);
 assert.equal(countElements(textElement), 2);
 assert.equal(collectText(textElement), text.value);
+const textStage = textElement.children[0];
+assert.ok(textStage instanceof CueElement);
+assert.deepEqual(textStage.style.fontFamily, ['serif']);
 
 /// @case The gallery switches to Image with the relative-path source and intrinsic sizing.
 /// @expect The isolated page contains one builtin CueImageElement and no Flex or Text content.
@@ -159,5 +168,66 @@ assert.notEqual(uuidImage, relativeImage);
 
 app.unmount();
 assert.deepEqual(root.children, []);
+
+/// @case The Position page switches B from absolute to relative.
+/// @expect The same A/B/C case remains mounted without content from another gallery.
+const position = ref('position-absolute');
+const positionApp = renderer.createApp(defineComponent(() => () => h(positionPlayground, {
+  positionClasses: [position.value, 'anchor-top-left'],
+})));
+positionApp.mount(root);
+const positionRoot = root.children[0];
+assert.ok(textContentWithoutSpaces(root).startsWith('ABC'));
+position.value = 'position-relative';
+await nextTick();
+assert.equal(root.children[0], positionRoot);
+assert.ok(textContentWithoutSpaces(root).startsWith('ABC'));
+positionApp.unmount();
+
+/// @case Typed width/color overrides update, clear, and coexist with an important stylesheet declaration.
+/// @expect One mounted meter reflects the values and communicates the active precedence rule.
+const styleApplied = ref(true);
+const styleWidth = ref(40);
+const styleColor = ref('sky');
+const styleImportant = ref(false);
+const styleApp = renderer.createApp(defineComponent(() => () => h(styleApiPlayground, {
+  applied: styleApplied.value,
+  width: styleWidth.value,
+  color: styleColor.value,
+  important: styleImportant.value,
+})));
+styleApp.mount(root);
+await nextTick();
+const styleRoot = root.children[0];
+assert.ok(styleRoot instanceof CueElement);
+const styleTrack = styleRoot.children.filter(child => child instanceof CueElement)[1];
+assert.ok(styleTrack instanceof CueElement);
+const meter = styleTrack.children[0];
+assert.ok(meter instanceof CueElement);
+assert.deepEqual(meter.style.width, Length.percent(40));
+styleWidth.value = 73;
+styleColor.value = 'green';
+await nextTick();
+assert.equal(root.children[0], styleRoot);
+assert.ok(collectText(root).includes('Width override: 73%'));
+assert.deepEqual(meter.style.width, Length.percent(73));
+assert.deepEqual(meter.style.backgroundColor, { red: 52, green: 211, blue: 153, alpha: 1 });
+styleApplied.value = false;
+await nextTick();
+assert.equal(root.children[0], styleRoot);
+assert.ok(collectText(root).includes('Overrides cleared'));
+assert.ok(collectText(root).includes('restores width: 20%'));
+assert.equal(meter.style.width, undefined);
+assert.equal(meter.style.backgroundColor, undefined);
+styleApplied.value = true;
+styleImportant.value = true;
+await nextTick();
+assert.ok(collectText(root).includes('75% !important'));
+styleApp.unmount();
+assert.deepEqual(root.children, []);
+
+function textContentWithoutSpaces(node: CueNode): string {
+  return collectText(node).replaceAll(/\s/g, '');
+}
 
 console.log('[cue-basic-smoke] passed');
