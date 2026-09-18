@@ -1,3 +1,4 @@
+import decorationPlayground from './generated/cue/decoration-playground.cue.js';
 import flexPlayground from './generated/cue/flex-playground.cue.js';
 import imagePlayground from './generated/cue/image-playground.cue.js';
 import textPlayground from './generated/cue/text-playground.cue.js';
@@ -32,6 +33,7 @@ import {
 
 enum ControlScope {
   container = 'container',
+  decoration = 'decoration',
   featuredItem = 'featured-item',
   image = 'image',
   imageSource = 'image-source',
@@ -45,6 +47,7 @@ enum ControlPresentation {
 }
 
 enum GalleryPage {
+  decoration = 'decoration',
   flex = 'flex',
   image = 'image',
   text = 'text',
@@ -357,6 +360,102 @@ const imageGalleryControlSpecs: readonly GalleryControlSpec[] = [
   },
 ];
 
+const decorationGalleryControlSpecs: readonly GalleryControlSpec[] = [
+  {
+    property: 'border',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.decoration,
+    options: [
+      { label: 'uniform', value: 'border-uniform' },
+      { label: '4 sides', value: 'border-sides' },
+    ],
+  },
+  {
+    property: 'border-radius',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.decoration,
+    options: [
+      { label: 'round', value: 'radius-round' },
+      { label: 'elliptic', value: 'radius-elliptic' },
+      { label: 'percent', value: 'radius-percent' },
+      { label: '0', value: 'radius-square' },
+    ],
+  },
+  {
+    property: 'outline',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.decoration,
+    options: [
+      { label: 'none', value: 'outline-none' },
+      { label: 'solid', value: 'outline-solid' },
+      { label: 'offset', value: 'outline-offset' },
+    ],
+  },
+  {
+    property: 'box-shadow',
+    presentation: ControlPresentation.menu,
+    scope: ControlScope.decoration,
+    options: [
+      { label: 'none', value: 'shadow-none' },
+      { label: 'outer', value: 'shadow-outer' },
+      { label: 'multiple', value: 'shadow-multiple' },
+      { label: 'inset', value: 'shadow-inset' },
+      { label: 'outer + inset', value: 'shadow-mixed' },
+    ],
+  },
+  {
+    property: 'background-image',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.decoration,
+    options: [
+      { label: 'none', value: 'background-color-only' },
+      { label: 'texture', value: 'background-texture' },
+      { label: 'gradient', value: 'background-gradient' },
+    ],
+  },
+  {
+    property: 'overflow',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.decoration,
+    options: [
+      { label: 'normal', value: 'overflow-normal' },
+      { label: 'visible', value: 'overflow-visible' },
+      { label: 'hidden', value: 'overflow-hidden' },
+    ],
+  },
+  {
+    property: 'transform',
+    presentation: ControlPresentation.menu,
+    scope: ControlScope.decoration,
+    options: [
+      { label: 'none', value: 'transform-none' },
+      { label: 'rotate', value: 'transform-rotate' },
+      { label: 'scale', value: 'transform-scale' },
+      { label: 'translate', value: 'transform-translate' },
+    ],
+  },
+  {
+    property: '-cue-opacity',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.decoration,
+    options: [
+      { label: '1', value: 'cue-opacity-full' },
+      { label: '0.5', value: 'cue-opacity-half' },
+      { label: '0.25', value: 'cue-opacity-quarter' },
+      { label: '0', value: 'cue-opacity-zero' },
+    ],
+  },
+  {
+    property: 'z-index',
+    presentation: ControlPresentation.inline,
+    scope: ControlScope.decoration,
+    options: [
+      { label: 'auto', value: 'z-auto' },
+      { label: '1 (front)', value: 'z-front' },
+    ],
+  },
+];
+
 function createGalleryControls(
   specs: readonly GalleryControlSpec[],
 ): GalleryControl[] {
@@ -385,6 +484,7 @@ function mountCueExample(scene: Scene): void {
 
   const selectedPage = ref(GalleryPage.flex);
   const flexControls = createGalleryControls(flexGalleryControlSpecs);
+  const decorationControls = createGalleryControls(decorationGalleryControlSpecs);
   const imageControls = createGalleryControls(imageGalleryControlSpecs);
   const textControls = createGalleryControls(textGalleryControlSpecs);
   const textContentControl = textControls.find(
@@ -409,7 +509,13 @@ function mountCueExample(scene: Scene): void {
           .filter(control => control.scope === ControlScope.featuredItem)
           .map(control => control.selected.value),
       })
-      : selectedPage.value === GalleryPage.text
+      : selectedPage.value === GalleryPage.decoration
+        ? h(decorationPlayground, {
+          decorationClasses: decorationControls.map(
+            control => control.selected.value,
+          ),
+        })
+        : selectedPage.value === GalleryPage.text
         ? h(textPlayground, {
           text: textContentControl.selected.value,
           textClasses: textControls
@@ -431,6 +537,7 @@ function mountCueExample(scene: Scene): void {
     scene,
     camera,
     selectedPage,
+    decorationControls,
     flexControls,
     imageControls,
     textControls,
@@ -450,13 +557,14 @@ function mountCueExample(scene: Scene): void {
     screen.off('window-resize', fitPlaygroundCameras);
   });
 
-  console.log('[cue-basic] Flex, Text, and Image playgrounds mounted');
+  console.log('[cue-basic] Flex, Text, Image, and Decoration playgrounds mounted');
 }
 
 function mountGalleryControls(
   scene: Scene,
   mainCamera: Camera,
   selectedPage: Ref<GalleryPage>,
+  decorationControls: readonly GalleryControl[],
   flexControls: readonly GalleryControl[],
   imageControls: readonly GalleryControl[],
   textControls: readonly GalleryControl[],
@@ -501,11 +609,23 @@ function mountGalleryControls(
     'One cue-image + source and sizing controls',
     imageControls,
   );
+  const decorationPanel = createGalleryControlPanel(
+    controlX,
+    'Decoration Playground',
+    'One box + composable border, background, outline, and shadow controls',
+    decorationControls,
+  );
   canvasNode.addChild(flexPanel);
   canvasNode.addChild(textPanel);
   canvasNode.addChild(imagePanel);
+  canvasNode.addChild(decorationPanel);
 
   const pages = [
+    {
+      label: 'Decoration',
+      panel: decorationPanel,
+      value: GalleryPage.decoration,
+    },
     {
       label: 'Flex',
       panel: flexPanel,
@@ -523,7 +643,7 @@ function mountGalleryControls(
     },
   ] as const;
   const pageButtons: Node[] = [];
-  const pageButtonWidth = 92;
+  const pageButtonWidth = 82;
   const pageButtonGap = 4;
   const pageButtonsLeft = controlX
     - (pageButtonWidth * pages.length + pageButtonGap) / 2;

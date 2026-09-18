@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "node --run compile:cue",
-    "compile:cue": "node --run compile:flex && node --run compile:text && node --run compile:image",
+    "compile:cue": "node --run compile:flex && node --run compile:text && node --run compile:image && node --run compile:decoration",
+    "compile:decoration": "cue compile src/decoration-playground.cue --out-dir=src/generated/cue",
     "compile:flex": "cue compile src/flex-playground.cue --out-dir=src/generated/cue",
     "compile:image": "cue compile src/image-playground.cue --out-dir=src/generated/cue",
     "compile:text": "cue compile src/text-playground.cue --out-dir=src/generated/cue",
