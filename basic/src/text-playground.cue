@@ -19,7 +19,14 @@ watchEffect(() => {
 
 <template>
   <div class="text-shell">
-    <div ref="textStage" :class="['text-stage', textClasses]">{{ text }}</div>
+    <div ref="textStage" :class="['text-stage', textClasses]">
+      <template v-if="text === 'inline-baselines'">Same line: <span class="large sample-target">BIG <span class="small">nested</span></span> and normal.<br>Next line keeps its own baseline.</template>
+      <template v-else-if="text === 'inline-wrapping'">One <span class="accent"> shared <span class="highlight"> inline </span> flow</span>; un<span class="accent">break</span>able stays one word. Change width to reflow every run.</template>
+      <template v-else-if="text === 'inline-atoms'">Text <span class="badge sample-target">42</span> and <cue-image class="inline-icon sample-target" src="uuid:59f31c06-0189-4865-a7cb-f30a36821b12@f9941" /> share a line.<br>Use vertical-align to move the highlighted boxes.</template>
+      <template v-else-if="text === 'inline-blocks'">Before <span class="accent">an inline <div class="block-interruption">A block interrupts the line</div>continuation</span> after the block.</template>
+      <template v-else-if="text === 'inline-flex-text'"><div class="anonymous-flex">Bare text<span class="badge">42</span>More text</div><br>Bare text becomes anonymous flex items; align-items centers them.</template>
+      <template v-else>{{ text }}</template>
+    </div>
   </div>
 </template>
 
@@ -52,6 +59,24 @@ watchEffect(() => {
   text-align: start;
   white-space: normal;
 }
+
+.large { font-size: 32px; line-height: 40px; color: #fbbf24; }
+.small { font-size: 14px; line-height: 20px; color: #34d399; }
+.accent { color: #38bdf8; }
+.highlight { background-color: #334155; border: 1px solid #38bdf8; padding: 2px 4px; }
+.badge { display: inline-block; padding: 4px 8px; background-color: #075985; border: 1px solid #38bdf8; color: #e0f2fe; }
+.inline-icon { width: 36px; height: 36px; }
+.block-interruption { display: block; padding: 8px; margin: 6px 0; background-color: #334155; color: #fbbf24; }
+.anonymous-flex { display: flex; align-items: center; justify-content: space-between; height: 100px; background-color: #334155; font-size: 14px; }
+.vertical-baseline .sample-target { vertical-align: baseline; }
+.vertical-middle .sample-target { vertical-align: middle; }
+.vertical-top .sample-target { vertical-align: top; }
+.vertical-bottom .sample-target { vertical-align: bottom; }
+.vertical-text-top .sample-target { vertical-align: text-top; }
+.vertical-text-bottom .sample-target { vertical-align: text-bottom; }
+.vertical-sub .sample-target { vertical-align: sub; }
+.vertical-super .sample-target { vertical-align: super; }
+.vertical-percent .sample-target { vertical-align: 25%; }
 
 .width-200 {
   width: 200px;

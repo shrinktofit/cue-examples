@@ -307,6 +307,11 @@ const textGalleryControlSpecs: readonly GalleryControlSpec[] = [
     presentation: ControlPresentation.menu,
     scope: ControlScope.textContent,
     options: [
+      { label: 'mixed baselines', value: 'inline-baselines' },
+      { label: 'cross-span wrapping', value: 'inline-wrapping' },
+      { label: 'inline-block + image', value: 'inline-atoms' },
+      { label: 'block interruption', value: 'inline-blocks' },
+      { label: 'anonymous flex text', value: 'inline-flex-text' },
       {
         label: 'mixed wrapping',
         value: 'Cue wraps English words and 中文文本。\nSource line break    with spaces.',
@@ -323,6 +328,22 @@ const textGalleryControlSpecs: readonly GalleryControlSpec[] = [
         label: 'long word overflow',
         value: 'supercalifragilisticexpialidocious remains one unbroken word',
       },
+    ],
+  },
+  {
+    property: 'vertical-align',
+    presentation: ControlPresentation.menu,
+    scope: ControlScope.text,
+    options: [
+      { label: 'baseline', value: 'vertical-baseline' },
+      { label: 'middle', value: 'vertical-middle' },
+      { label: 'top', value: 'vertical-top' },
+      { label: 'bottom', value: 'vertical-bottom' },
+      { label: 'text-top', value: 'vertical-text-top' },
+      { label: 'text-bottom', value: 'vertical-text-bottom' },
+      { label: 'sub', value: 'vertical-sub' },
+      { label: 'super', value: 'vertical-super' },
+      { label: '25%', value: 'vertical-percent' },
     ],
   },
   {

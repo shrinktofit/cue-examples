@@ -22,6 +22,10 @@ built-in control galleries. Navigation and all controls on the right remain Coco
 - Flex Playground contains only the A-J Flex items and controls for their container and selected item.
 - Text Playground contains one text box with controls for its sample, white-space processing, width,
   alignment, font size, line height, font family, color, font weight, and Cue text stroke.
+  Its sample menu also covers mixed-font baselines, nested spans and shared wrapping,
+  inline-block + SpriteFrame images, block interruptions, and anonymous flex text items.
+  `vertical-align` controls the highlighted spans / atomic boxes. Combine it with width,
+  font size and line height; `<br>` remains a forced break in every white-space mode.
   Smiley Sans and Maoken source TTF assets are loaded before mounting; select them in the font-family menu.
 - Image Playground contains one `cue-image` with controls for a relative-path SpriteFrame, an
   explicit `uuid:` SpriteFrame, intrinsic sizing, one-axis proportional sizing, and explicit stretch.
@@ -151,3 +155,16 @@ An optional third argument selects the screenshot directory; otherwise screensho
 clicks, hover, propagation, captured dragging beyond the canvas, button chords, blur cancellation,
 transformed/clipped hits, inherited `pointer-events`, and public CueDocument disable/unmount cleanup.
 Assertions inspect only the public Cue element tree and Cocos scene APIs.
+
+## Browser text regression
+
+With Preview running, `scripts/verify-text-preview.ts` switches all five inline samples,
+combines nine vertical-align values with width changes, and saves actual Cocos screenshots.
+It uses the same arguments and shared Playwright installation as the input regression:
+
+```powershell
+node scripts/verify-text-preview.ts 'http://127.0.0.1:7457/' 'U:\AgentTools\playwright\node_modules\playwright'
+```
+
+This checks the real Gallery integration; precise line geometry is separately compared against
+Chromium DOM in the Cue repository's `packages/runtime/test/verify-inline-layout.ts`.
