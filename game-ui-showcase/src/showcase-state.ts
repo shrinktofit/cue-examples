@@ -1,4 +1,3 @@
-import { computed, ref } from '@bsgames/cue';
 import playerProfile from './generated/cue/player-profile.cue.js';
 
 export interface ShowcaseFonts {
@@ -6,6 +5,7 @@ export interface ShowcaseFonts {
   numbers: string;
 }
 
+/** Case registry: each entry becomes one tab and selects its Cue component. */
 export const showcaseCases = [
   {
     id: 'player-profile',
@@ -13,33 +13,4 @@ export const showcaseCases = [
     description: 'Lobby identity, level badge, and reactive experience bar',
     component: playerProfile,
   },
-] as const;
-
-export function createShowcaseState() {
-  const selectedCase = ref<string>(showcaseCases[0].id);
-  const currentCase = computed(() => {
-    const selected = showcaseCases.find(entry => entry.id === selectedCase.value);
-    if (!selected) {
-      throw new Error(`Unknown showcase case: ${selectedCase.value}`);
-    }
-    return selected;
-  });
-  const playerName = ref('星际旅行者');
-  const hudWidth = ref(480);
-  const nameFontSize = ref(24);
-  const level = ref(89);
-  const experience = ref(635);
-  const experienceMax = 1617;
-  const experienceRatio = computed(() => experience.value / experienceMax);
-  return {
-    selectedCase,
-    currentCase,
-    playerName,
-    hudWidth,
-    nameFontSize,
-    level,
-    experience,
-    experienceMax,
-    experienceRatio,
-  };
-}
+];

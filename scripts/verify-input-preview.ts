@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
-import { preparePreviewVerification } from './preview-verification.ts';
+import { createControlPlaneClicker, preparePreviewVerification } from './preview-verification.ts';
 
 const { chromium, outputDirectory, targetUrl } = await preparePreviewVerification(
   '063f3c76-b538-413c-bdbe-fe65821e9be5',
@@ -16,22 +16,9 @@ try {
   await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForFunction(() => (window as any).cc?.director.getScene()?.children.some((node: any) => node.getComponents((window as any).cc.Component).some((component: any) => component.rootElement?.children.length)));
   await page.waitForTimeout(500);
-  // Click native controls by their public scene/UITransform/camera coordinates.
-  const clickNative = async (name: string) => {
-    const p = await page.evaluate((name: string) => {
-      const cc = (window as any).cc;
-      const scene = cc.director.getScene();
-      const walk = (node: any): any[] => [node, ...node.children.flatMap(walk)];
-      const node = walk(scene).find(node => node.name === name && node.activeInHierarchy && node.getComponent(cc.Button));
-      if (!node) throw new Error('Missing native button: ' + name);
-      const camera = scene.renderScene.cameras.find((camera: any) => camera.visibility & node.layer);
-      const screen = camera.worldToScreen(new cc.Vec3(), node.worldPosition);
-      const rect = cc.game.canvas.getBoundingClientRect();
-      return { x: rect.x + screen.x / cc.screen.devicePixelRatio, y: rect.y + rect.height - screen.y / cc.screen.devicePixelRatio };
-    }, name);
-    await page.mouse.click(p.x, p.y);
-    await page.waitForTimeout(150);
-  };
+  // Click controls through real mouse input at the coordinates the shared panel
+  // model derives for the single Cue document.
+  const clickNative = createControlPlaneClicker(page, 'Cue Basic Document').click;
   await clickNative('Input Gallery');
   await page.screenshot({ path: resolve(outputDirectory, 'cue-input-initial.png') });
   await page.evaluate(() => {

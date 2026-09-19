@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
-import { preparePreviewVerification } from './preview-verification.ts';
+import { createControlPlaneClicker, preparePreviewVerification } from './preview-verification.ts';
 
 const { chromium, outputDirectory, targetUrl } = await preparePreviewVerification(
   '063f3c76-b538-413c-bdbe-fe65821e9be5', 'basic',
@@ -11,25 +11,11 @@ try {
   const errors: string[] = [];
   page.on('pageerror', (error: Error) => errors.push(error.message));
   await page.goto(targetUrl, { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => (window as any).cc?.director.getScene()?.getChildByName('Cue Gallery'));
-  const clickNative = async (name: string): Promise<void> => {
-    const point = await page.evaluate((name: string) => {
-      const cc = (window as any).cc;
-      const scene = cc.director.getScene();
-      const walk = (node: any): any[] => [node, ...node.children.flatMap(walk)];
-      const node = walk(scene).find(node => node.name === name && node.activeInHierarchy && node.getComponent(cc.Button));
-      if (!node) throw new Error('Missing native control: ' + name);
-      const camera = scene.renderScene.cameras.find((camera: any) => camera.visibility & node.layer);
-      const screen = camera.worldToScreen(new cc.Vec3(), node.worldPosition);
-      const rect = cc.game.canvas.getBoundingClientRect();
-      return { x: rect.x + screen.x / cc.screen.devicePixelRatio, y: rect.y + rect.height - screen.y / cc.screen.devicePixelRatio };
-    }, name);
-    await page.mouse.click(point.x, point.y);
-    await page.waitForTimeout(200);
-  };
+  await page.waitForFunction(() => (window as any).cc?.director.getScene()?.getChildByName('Cue Basic Document'));
+  const clickNative = createControlPlaneClicker(page, 'Cue Basic Document').click;
   const textContent = async (): Promise<string> => page.evaluate(() => {
     const cc = (window as any).cc;
-    const host = cc.director.getScene().getChildByName('Cue Gallery').getComponents(cc.Component).find((item: any) => item.rootElement);
+    const host = cc.director.getScene().getChildByName('Cue Basic Document').getComponents(cc.Component).find((item: any) => item.rootElement);
     const text = (node: any): string => typeof node.data === 'string' ? node.data : (node.children ?? []).map(text).join('');
     return text(host.rootElement);
   });

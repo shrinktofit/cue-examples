@@ -1,8 +1,8 @@
 # Basic Cue galleries
 
 The playground `.cue` files in src/ are compiled by the workspace build into the ignored
-src/generated/cue directory. src/index.ts imports those generated
-facades and mounts the selected page on a CueDocument in the active Cocos scene.
+src/generated/cue directory. src/index.ts imports those generated facades plus
+`src/app.cue`, and mounts one CueDocument that renders both the gallery stage and the control plane.
 
 This is intentionally a temporary pre-OMS-compiler workflow. The .cue compiler remains a library,
 the CLI only writes its returned artifacts, and OMS continues to own the project module graph.
@@ -15,9 +15,12 @@ pnpm --dir U:\Repos\Bluesquall\cc-extensions\cc-extension-cue-examples\basic ins
 pnpm --dir U:\Repos\Bluesquall\cc-extensions\cc-extension-cue-examples\basic build
 ```
 
-Open assets/main.scene and start Preview. The Cocos UI control plane provides thirteen independent pages.
-The upper BASE row contains the seven foundation galleries; the lower CONTROLS row contains six
-built-in control galleries. Navigation and all controls on the right remain Cocos UI.
+Open assets/main.scene and start Preview. The Cue control plane provides thirteen independent pages in
+the same document as the gallery stage. The upper BASE row contains the seven foundation galleries; the
+lower CONTROLS row contains six built-in control galleries. Navigation and every control on the right are
+Cue elements: tabs and inline choices are `cue-button`s, menu controls are `cue-select`s, and the
+`src/app.cue` component owns page selection plus the per-control state that the mounted gallery receives
+as props.
 
 - Flex Playground contains only the A-J Flex items and controls for their container and selected item.
 - Text Playground contains one text box with controls for its sample, white-space processing, width,
@@ -38,7 +41,7 @@ built-in control galleries. Navigation and all controls on the right remain Coco
   clears the overrides. A separate switch demonstrates stylesheet `!important` precedence.
   Dynamic styles are typed values; runtime CSS strings are not parsed.
 - Input Playground contains independent click/hover, propagation, captured drag, and hit-region examples.
-  The controls remain native Cocos UI; the interactive shapes and their local Vue state belong to Cue.
+  The event-behavior choices are Cue controls now; the interactive shapes and their local Vue state also belong to Cue.
 
 ## Built-in control galleries
 
@@ -55,7 +58,7 @@ The custom text and number inputs use `v-model.lazy`, so their displayed model c
 The default inputs use `v-model` and update on input. Password mode intentionally keeps the model
 visible in the verification readout.
 
-The Cocos panel sets disabled state, an external preset, the control mode and custom width.
+The Cue panel in the same document sets disabled state, an external preset, the control mode and custom width.
 **Apply external value** reapplies the selected preset after editing; this must not add user
 input/change events. **Remount controls** replaces both instances and resets the log.
 For Button the preset changes its label; Toggle treats the empty preset as false, Slider as zero,
@@ -70,7 +73,8 @@ Select and NumberInput as undefined, and TextInput as an empty string.
 | TextInput | Selection replacement, paste, Chinese IME, single/multiline/password/read-only modes; input versus lazy commit; focus and blur. |
 | NumberInput | Empty, minus and decimal drafts; paste, step 0.5 and bounds -10–10; read-only mode; no NaN or duplicate commit. |
 
-Use the Cocos EditBox on the right to type, then click either Cue input and continue typing.
+The only Cocos control left is the EditBox on the right: type there, then click either Cue input and
+continue typing.
 Keyboard and IME text must reach only the current editor. While composing Chinese, Enter/Escape
 and arrow keys must not activate a different control. Switch pages or remount during editing,
 selection, a popup or a drag; the new page and native EditBox must remain usable, with no duplicate
@@ -87,6 +91,14 @@ remounting and cleanup through public APIs. Pointer routing, actual keyboard foc
 composition and Cocos coexistence require the running Preview checks above; the Node smoke does
 not claim to verify those platform interactions.
 
+`node --run test:control-plane` runs
+[scripts/control-plane-smoke.ts](scripts/control-plane-smoke.ts), which mounts the whole
+[src/app.cue](src/app.cue) document in Node: one Cue tree holding the stage and the control plane.
+It checks that the thirteen tabs and their panel titles are Cue, that an inline choice and a
+`cue-select` commit both reach the mounted gallery props, that Apply does not remount while Remount
+replaces the instances, and that the native EditBox slot geometry and its visibility callback still
+match the scene layout constants.
+
 With basic Preview already running, the saved control regression can be run from the
 workspace root without launching Vortex:
 
@@ -96,9 +108,12 @@ $env:PLAYWRIGHT_BROWSERS_PATH = 'U:\AgentTools\playwright\browsers'
 node scripts/verify-controls-preview.ts 'http://127.0.0.1:7457/' 'U:\AgentTools\playwright\node_modules\playwright'
 ```
 
-It uses Cocos scene coordinates for native navigation, the public Cue `focus()` API for keyboard
-checks, and real browser keys/text for input. Mouse checks locate visible controls through
-actual pointer moves and public pointer-event offsets, without reading private layout objects.
+Navigation and panel choices are clicked at the coordinates the shared panel model in
+`src/control-plane-model.ts` and `src/control-layout.ts` derives for the single Cue document (the
+Cocos EditBox fixture keeps its scene-node lookup), the public Cue `focus()` API covers keyboard
+checks, and real browser keys/text enter through Chromium. Mouse checks on the stage locate visible
+controls through actual pointer moves and public pointer-event offsets, without reading private
+layout objects.
 They exercise Toggle clicks, Slider capture beyond its boundary, Select option clicks and
 TextInput caret placement. Both default and custom TextInput/NumberInput instances also receive
 a first mouse click in the blank space after their initial text, followed by actual ArrowLeft,

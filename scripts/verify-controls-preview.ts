@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { preparePreviewVerification } from './preview-verification.ts';
+import { createControlPlaneClicker, preparePreviewVerification } from './preview-verification.ts';
 
 const { chromium, outputDirectory, targetUrl } = await preparePreviewVerification(
   '063f3c76-b538-413c-bdbe-fe65821e9be5',
@@ -18,35 +18,19 @@ try {
   await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForFunction(() => {
     const cc = (window as any).cc;
-    return cc?.director.getScene()?.getChildByName('Cue Gallery')?.getComponents(cc.Component)
+    return cc?.director.getScene()?.getChildByName('Cue Basic Document')?.getComponents(cc.Component)
       .some((component: any) => component.rootElement?.children.length);
   });
 
-  // Native navigation and EditBox receive actual mouse input at public scene coordinates.
-  const clickNative = async (name: string): Promise<void> => {
-    const point = await page.evaluate((name: string) => {
-      const cc = (window as any).cc;
-      const scene = cc.director.getScene();
-      const walk = (node: any): any[] => [node, ...node.children.flatMap(walk)];
-      const node = walk(scene).find(node => node.name === name && node.activeInHierarchy
-        && (node.getComponent(cc.Button) || node.getComponent('cc.EditBox')));
-      if (!node) throw new Error('Missing native control: ' + name);
-      const camera = scene.renderScene.cameras.find((camera: any) => camera.visibility & node.layer);
-      const screen = camera.worldToScreen(new cc.Vec3(), node.worldPosition);
-      const rect = cc.game.canvas.getBoundingClientRect();
-      return {
-        x: rect.x + screen.x / cc.screen.devicePixelRatio,
-        y: rect.y + rect.height - screen.y / cc.screen.devicePixelRatio,
-      };
-    }, name);
-    await page.mouse.click(point.x, point.y);
-    await page.waitForTimeout(150);
-  };
+  // The control plane is Cue now: navigation and state controls are clicked at
+  // the coordinates the shared panel model derives, and the one native control
+  // (the EditBox fixture) keeps its scene-node lookup.
+  const clickNative = createControlPlaneClicker(page, 'Cue Basic Document').click;
 
   const snapshot = async (tag: string): Promise<{ values: unknown[]; disabled: boolean[]; focused: boolean[]; text: string; nativeText: string }> => page.evaluate((tag: string) => {
     const cc = (window as any).cc;
     const scene = cc.director.getScene();
-    const host = scene.getChildByName('Cue Gallery').getComponents(cc.Component).find((component: any) => component.rootElement);
+    const host = scene.getChildByName('Cue Basic Document').getComponents(cc.Component).find((component: any) => component.rootElement);
     const walk = (node: any): any[] => [node, ...(node.children ?? []).flatMap(walk)];
     const nodes = walk(host.rootElement);
     const controls = nodes.filter(node => node.tagName === tag);
@@ -65,7 +49,7 @@ try {
   const focusControl = async (tag: string, index = 0): Promise<void> => {
     await page.evaluate(({ tag, index }: { tag: string; index: number }) => {
       const cc = (window as any).cc;
-      const host = cc.director.getScene().getChildByName('Cue Gallery').getComponents(cc.Component)
+      const host = cc.director.getScene().getChildByName('Cue Basic Document').getComponents(cc.Component)
         .find((component: any) => component.rootElement);
       const walk = (node: any): any[] => [node, ...(node.children ?? []).flatMap(walk)];
       const controls = walk(host.rootElement).filter(node => node.tagName === tag);
@@ -81,7 +65,7 @@ try {
     await page.evaluate(({ tag, index, optionLabel }: { tag: string; index: number; optionLabel?: string }) => {
       const cc = (window as any).cc;
       const scene = cc.director.getScene();
-      const hostNode = scene.getChildByName('Cue Gallery');
+      const hostNode = scene.getChildByName('Cue Basic Document');
       const host = hostNode.getComponents(cc.Component).find((component: any) => component.rootElement);
       const walk = (node: any): any[] => [node, ...(node.children ?? []).flatMap(walk)];
       const control = walk(host.rootElement).filter(node => node.tagName === tag)[index];
@@ -145,7 +129,7 @@ try {
         await page.waitForTimeout(150);
         const state = await page.evaluate(({ tag, index }: { tag: string; index: number }) => {
           const cc = (window as any).cc;
-          const host = cc.director.getScene().getChildByName('Cue Gallery').getComponents(cc.Component)
+          const host = cc.director.getScene().getChildByName('Cue Basic Document').getComponents(cc.Component)
             .find((component: any) => component.rootElement);
           const walk = (node: any): any[] => [node, ...(node.children ?? []).flatMap(walk)];
           const control = walk(host.rootElement).filter(node => node.tagName === tag)[index];
@@ -336,7 +320,7 @@ try {
   const cdp = await page.context().newCDPSession(page);
   await page.evaluate(() => {
     const cc = (window as any).cc;
-    const host = cc.director.getScene().getChildByName('Cue Gallery').getComponents(cc.Component)
+    const host = cc.director.getScene().getChildByName('Cue Basic Document').getComponents(cc.Component)
       .find((component: any) => component.rootElement);
     const trace: unknown[] = [];
     (window as any).__cueRealTouchTrace = trace;

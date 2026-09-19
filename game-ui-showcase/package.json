@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "cue compile src/cases/player-profile/player-profile.cue --out-dir=src/generated/cue",
+    "build": "node --run compile:case && node --run compile:app",
+    "compile:case": "cue compile src/cases/player-profile/player-profile.cue --out-dir=src/generated/cue",
+    "compile:app": "cue compile src/app.cue --out-dir=src/generated/cue",
     "test": "node scripts/smoke.ts"
   },
   "dependencies": {

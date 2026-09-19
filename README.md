@@ -30,13 +30,14 @@ The projects serve different purposes:
   Button, Toggle, Slider, Select, TextInput, and NumberInput galleries.
 - [game-ui-showcase](game-ui-showcase/README.md) has complete game UI components selected through a tab registry.
 
-The controls use Cocos UI. The content of every gallery and showcase case is rendered by Cue.
-The six built-in control galleries each compare default and custom Cue controls, with independent
-values and event logs. Navigation, external presets, disabled/mode switches, remount actions, and
-the native EditBox used for focus/IME comparison remain Cocos UI.
+Every project is self-hosted: one CueDocument renders the gallery stage and the control plane
+together. The six built-in control galleries each compare default and custom Cue controls, with
+independent values and event logs. Navigation tabs, panel choices, menus, the experience slider and
+the remount/apply actions are all Cue elements now; Cocos keeps only the scene, the cameras, the
+font assets and the single native EditBox used as the focus/IME comparison fixture.
 Input Gallery demonstrates Cue clicks, hover, propagation, pointer capture, clipping, transformed hits,
 and `pointer-events` pass-through. The player HUD's avatar toggles profile details, and its draggable
-experience meter shares state with the native controls.
+experience meter shares state with the Cue slider in the same document.
 
 Saved browser regressions exercise the running projects through actual mouse/touch input:
 [`scripts/verify-input-preview.ts`](scripts/verify-input-preview.ts) checks the basic gallery, and

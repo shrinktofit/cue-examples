@@ -1,7 +1,8 @@
 # Game UI Showcase
 
-An independent Vortex project for complete game interface components. Cue renders each case;
-Cocos UI provides the case tabs and example state controls.
+An independent Vortex project for complete game interface components. One CueDocument renders each
+case together with its Cue tabs and state controls; Cocos only supplies the scene, the camera and the
+font assets.
 
 ## Run
 
@@ -23,8 +24,8 @@ Select a short/long/Chinese nickname, choose a level, drag the experience slider
 Inline choices also control the HUD width (360/480/620 px) and nickname font size (18/24/32 px).
 The Cue HUD is interactive: click the avatar to open or close profile details, and press or drag directly
 on the experience meter to update experience. Pointer capture keeps the meter active when the drag leaves
-its bounds. The meter emits `update:experience`; the shared state updates its fill, digits, detail view,
-and native Cocos slider together.
+its bounds. The meter emits `update:experience`; the shared Cue state updates its fill, digits, detail view,
+the panel readout and the `cue-slider` together.
 The experience meter's width is assigned through a template ref with `element.style.width = Length.percent(...)`;
 its label updates with the same state. HUD width and nickname font size use numeric style API values in pixels.
 
@@ -54,14 +55,14 @@ node scripts/verify-hud-input-preview.ts 'http://127.0.0.1:7458/' 'U:\AgentTools
 
 Both arguments are required: use your Preview URL and an existing Playwright installation.
 The script selects the main scene in a fresh 1440 × 850 headless browser, clicks the avatar, drags the
-Cue meter, and checks matching experience text and native slider progress. It also verifies that blur
+Cue meter, and checks matching experience text and the Cue slider value. It also verifies that blur
 ends a drag and the next drag still works. Screenshots default to the ignored
 `game-ui-showcase/temp/input-preview/` directory; an optional third argument changes the output directory.
 No project browser dependency is required and the script does not launch Vortex.
 
-`src/showcase-state.ts` owns the case registry and selection state. Each registry entry produces a tab
-and selects its Cue component. Only Player profile is registered initially; add complete cases there
-as they become available.
+`src/showcase-state.ts` owns the case registry. Each registry entry produces a tab in
+[src/app.cue](src/app.cue), which owns the case selection and the profile state every control binds
+to. Only Player profile is registered initially; add complete cases there as they become available.
 
 ## Source assets
 

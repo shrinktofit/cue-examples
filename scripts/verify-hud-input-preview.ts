@@ -15,17 +15,19 @@ try {
   await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForFunction(() => {
     const cc = (window as any).cc;
-    return cc?.director.getScene()?.getChildByName('Game UI Case')?.getComponents(cc.Component).some((c: any) => c.rootElement?.children.length);
+    return cc?.director.getScene()?.getChildByName('Showcase Document')?.getComponents(cc.Component).some((c: any) => c.rootElement?.children.length);
   });
   await page.waitForTimeout(500);
   const state = async (): Promise<{ texts: string[]; sliders: number[] }> => page.evaluate(() => {
     const cc = (window as any).cc;
     const scene = cc.director.getScene();
-    const host = scene.getChildByName('Game UI Case').getComponents(cc.Component).find((c: any) => c.rootElement);
+    const host = scene.getChildByName('Showcase Document').getComponents(cc.Component).find((c: any) => c.rootElement);
     const walk = (n: any): any[] => [n, ...(n.children ?? []).flatMap(walk)];
     const texts = walk(host.rootElement).filter(n => typeof n.data === 'string').map(n => n.data);
-    const sliders = walk(scene).flatMap(n => n.getComponents(cc.Slider)).map(slider => slider.progress);
-    return { texts, sliders };
+    // The experience control is a real Cue slider now, so read its public value
+    // instead of a Cocos Slider progress.
+    const slider = walk(host.rootElement).find(n => n.tagName === 'cue-slider');
+    return { texts, sliders: slider ? [slider.value] : [] };
   });
   await page.screenshot({ path: resolve(outputDirectory, 'cue-hud-input-initial.png') });
   await page.mouse.click(180, 440);
@@ -38,7 +40,7 @@ try {
   await page.waitForTimeout(150);
   assert.ok((await state()).texts.includes('1078/1617'));
   assert.ok((await state()).texts.includes('Experience 1078 / 1617'));
-  assert.equal((await state()).sliders[0], 2 / 3);
+  assert.equal((await state()).sliders[0], 1078, 'the Cue slider must carry the dragged experience');
   await page.mouse.move(350, 470);
   await page.mouse.down();
   await page.mouse.move(360, 470);
@@ -55,7 +57,7 @@ try {
   await page.mouse.up();
   await page.waitForTimeout(150);
   assert.ok((await state()).texts.includes('1078/1617'));
-  assert.equal((await state()).sliders[0], 2 / 3);
+  assert.equal((await state()).sliders[0], 1078, 'the Cue slider must carry the dragged experience');
   await page.screenshot({ path: resolve(outputDirectory, 'cue-hud-input-verified.png') });
   assert.equal(errors.length, 0, errors.join('\n'));
   console.log('PASS: avatar details, captured meter drag, reactive values/native slider, blur cleanup and new drag');

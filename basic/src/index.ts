@@ -11,16 +11,19 @@ import sliderPlayground from './generated/cue/slider-playground.cue.js';
 import selectPlayground from './generated/cue/select-playground.cue.js';
 import textInputPlayground from './generated/cue/text-input-playground.cue.js';
 import numberInputPlayground from './generated/cue/number-input-playground.cue.js';
+import basicApp from './generated/cue/app.cue.js';
 import { calculateFittedOrthoHeight } from './calculate-fitted-ortho-height.ts';
+import { DEFAULT_PANEL_ID, PANELS } from './control-plane-model.ts';
 import {
-  defineComponent,
-  h,
-  ref,
-  type Component,
-  type Ref,
-} from '@bsgames/cue';
+  DOCUMENT_ORIGIN,
+  DOCUMENT_SIZE,
+  NATIVE_AREA,
+  NATIVE_NOTE_Y,
+  NATIVE_SLOT,
+  PANEL_BOX,
+  nativeInputPlacement,
+} from './control-layout.ts';
 import {
-  Button,
   Camera,
   Canvas,
   Color,
@@ -38,669 +41,35 @@ import {
   type Scene,
 } from 'cc';
 import { EDITOR_NOT_IN_PREVIEW } from 'cc/env';
-import {
-  CueDocument,
-  loadCueFont,
-} from '@bsgames/cue/host';
+import type { Component } from '@bsgames/cue';
+import { CueDocument, loadCueFont } from '@bsgames/cue/host';
 
-enum ControlScope {
-  control = 'control',
-  container = 'container',
-  decoration = 'decoration',
-  featuredItem = 'featured-item',
-  image = 'image',
-  imageSource = 'image-source',
-  input = 'input',
-  position = 'position',
-  styleApi = 'style-api',
-  text = 'text',
-  textContent = 'text-content',
-  textFont = 'text-font',
-}
-
-enum ControlPresentation {
-  inline = 'inline',
-  menu = 'menu',
-}
-
-enum GalleryPage {
-  button = 'button',
-  toggle = 'toggle',
-  slider = 'slider',
-  select = 'select',
-  textInput = 'text-input',
-  numberInput = 'number-input',
-  decoration = 'decoration',
-  flex = 'flex',
-  image = 'image',
-  input = 'input',
-  styleApi = 'style-api',
-  position = 'position',
-  text = 'text',
-}
-
+/**
+ * The whole scene is one CueDocument: the gallery stage and the control plane
+ * share a single Cue tree. Cocos only supplies the scene, the cameras, the font
+ * assets and one native EditBox that exists as the focus/IME comparison
+ * fixture.
+ */
 const playgroundSafeArea = {
-  height: 500,
-  width: 1_000,
+  height: DOCUMENT_SIZE.height,
+  width: DOCUMENT_SIZE.width,
 };
 
-interface GalleryControlOption {
-  label: string;
-  value: string;
-}
-
-interface GalleryControl {
-  options: readonly GalleryControlOption[];
-  presentation: ControlPresentation;
-  property: string;
-  scope: ControlScope;
-  selected: Ref<string>;
-}
-
-interface GalleryControlSpec {
-  options: readonly GalleryControlOption[];
-  presentation: ControlPresentation;
-  property: string;
-  scope: ControlScope;
-}
-
-interface BuiltinControlGallery {
-  value: GalleryPage;
-  label: string;
-  component: Component;
-  controls: GalleryControl[];
-  externalRevision: Ref<number>;
-  generation: Ref<number>;
-}
-
-const builtinControlGallerySpecs = [
-  {
-    value: GalleryPage.button, label: 'Button', component: buttonPlayground,
-    modes: [{ label: 'short', value: 'short' }, { label: 'long label', value: 'long' }],
-  },
-  {
-    value: GalleryPage.toggle, label: 'Toggle', component: togglePlayground,
-    modes: [{ label: 'short', value: 'short' }, { label: 'long label', value: 'long' }],
-  },
-  {
-    value: GalleryPage.slider, label: 'Slider', component: sliderPlayground,
-    modes: [{ label: 'horizontal', value: 'horizontal' }, { label: 'vertical', value: 'vertical' }],
-  },
-  {
-    value: GalleryPage.select, label: 'Select', component: selectPlayground,
-    modes: [{ label: 'all roles', value: 'all' }, { label: 'restricted', value: 'restricted' }],
-  },
-  {
-    value: GalleryPage.textInput, label: 'TextInput', component: textInputPlayground,
-    modes: [
-      { label: 'single line', value: 'single' }, { label: 'multiline', value: 'multiline' },
-      { label: 'password', value: 'password' }, { label: 'read only', value: 'readonly' },
-    ],
-  },
-  {
-    value: GalleryPage.numberInput, label: 'NumberInput', component: numberInputPlayground,
-    modes: [{ label: 'editable', value: 'editable' }, { label: 'read only', value: 'readonly' }],
-  },
-] as const;
-
-const flexGalleryControlSpecs: readonly GalleryControlSpec[] = [
-  {
-    property: 'flex-direction',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.container,
-    options: [
-      { label: 'row', value: 'direction-row' },
-      { label: 'row-reverse', value: 'direction-row-reverse' },
-      { label: 'column', value: 'direction-column' },
-      { label: 'column-reverse', value: 'direction-column-reverse' },
-    ],
-  },
-  {
-    property: 'flex-wrap',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.container,
-    options: [
-      { label: 'wrap', value: 'wrap-normal' },
-      { label: 'nowrap', value: 'wrap-nowrap' },
-      { label: 'wrap-reverse', value: 'wrap-reverse' },
-    ],
-  },
-  {
-    property: 'justify-content',
-    presentation: ControlPresentation.menu,
-    scope: ControlScope.container,
-    options: [
-      { label: 'space-around', value: 'justify-around' },
-      { label: 'start', value: 'justify-start' },
-      { label: 'end', value: 'justify-end' },
-      { label: 'flex-start', value: 'justify-flex-start' },
-      { label: 'flex-end', value: 'justify-flex-end' },
-      { label: 'center', value: 'justify-center' },
-      { label: 'space-between', value: 'justify-between' },
-      { label: 'space-evenly', value: 'justify-evenly' },
-      { label: 'stretch', value: 'justify-stretch' },
-    ],
-  },
-  {
-    property: 'align-items',
-    presentation: ControlPresentation.menu,
-    scope: ControlScope.container,
-    options: [
-      { label: 'center', value: 'items-center' },
-      { label: 'start', value: 'items-start' },
-      { label: 'end', value: 'items-end' },
-      { label: 'flex-start', value: 'items-flex-start' },
-      { label: 'flex-end', value: 'items-flex-end' },
-      { label: 'stretch', value: 'items-stretch' },
-      { label: 'baseline', value: 'items-baseline' },
-    ],
-  },
-  {
-    property: 'align-content',
-    presentation: ControlPresentation.menu,
-    scope: ControlScope.container,
-    options: [
-      { label: 'space-around', value: 'content-around' },
-      { label: 'start', value: 'content-start' },
-      { label: 'end', value: 'content-end' },
-      { label: 'flex-start', value: 'content-flex-start' },
-      { label: 'flex-end', value: 'content-flex-end' },
-      { label: 'center', value: 'content-center' },
-      { label: 'space-between', value: 'content-between' },
-      { label: 'space-evenly', value: 'content-evenly' },
-      { label: 'stretch', value: 'content-stretch' },
-    ],
-  },
-  {
-    property: 'row-gap',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.container,
-    options: [
-      { label: '12px', value: 'row-gap-12' },
-      { label: '0', value: 'row-gap-0' },
-      { label: '4px', value: 'row-gap-4' },
-      { label: '24px', value: 'row-gap-24' },
-    ],
-  },
-  {
-    property: 'column-gap',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.container,
-    options: [
-      { label: '12px', value: 'column-gap-12' },
-      { label: '0', value: 'column-gap-0' },
-      { label: '4px', value: 'column-gap-4' },
-      { label: '24px', value: 'column-gap-24' },
-    ],
-  },
-  {
-    property: 'align-self',
-    presentation: ControlPresentation.menu,
-    scope: ControlScope.featuredItem,
-    options: [
-      { label: 'auto', value: 'self-auto' },
-      { label: 'start', value: 'self-start' },
-      { label: 'end', value: 'self-end' },
-      { label: 'flex-start', value: 'self-flex-start' },
-      { label: 'flex-end', value: 'self-flex-end' },
-      { label: 'center', value: 'self-center' },
-      { label: 'stretch', value: 'self-stretch' },
-      { label: 'baseline', value: 'self-baseline' },
-    ],
-  },
-  {
-    property: 'flex-grow',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.featuredItem,
-    options: [
-      { label: '0', value: 'grow-0' },
-      { label: '1', value: 'grow-1' },
-      { label: '2', value: 'grow-2' },
-      { label: '3', value: 'grow-3' },
-    ],
-  },
-  {
-    property: 'flex-shrink',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.featuredItem,
-    options: [
-      { label: '1', value: 'shrink-1' },
-      { label: '0', value: 'shrink-0' },
-      { label: '2', value: 'shrink-2' },
-    ],
-  },
-  {
-    property: 'flex-basis',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.featuredItem,
-    options: [
-      { label: 'auto', value: 'basis-auto' },
-      { label: '60px', value: 'basis-60' },
-      { label: '25%', value: 'basis-quarter' },
-      { label: '50%', value: 'basis-half' },
-    ],
-  },
-  {
-    property: 'order',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.featuredItem,
-    options: [
-      { label: '0', value: 'order-normal' },
-      { label: '-1', value: 'order-first' },
-      { label: '1', value: 'order-last' },
-    ],
-  },
-  {
-    property: 'margin-left',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.featuredItem,
-    options: [
-      { label: '0', value: 'margin-normal' },
-      { label: 'auto', value: 'margin-left-auto' },
-    ],
-  },
-];
-
-const textGalleryControlSpecs: readonly GalleryControlSpec[] = [
-  {
-    property: 'sample',
-    presentation: ControlPresentation.menu,
-    scope: ControlScope.textContent,
-    options: [
-      { label: 'mixed baselines', value: 'inline-baselines' },
-      { label: 'cross-span wrapping', value: 'inline-wrapping' },
-      { label: 'inline-block + image', value: 'inline-atoms' },
-      { label: 'block interruption', value: 'inline-blocks' },
-      { label: 'anonymous flex text', value: 'inline-flex-text' },
-      {
-        label: 'mixed wrapping',
-        value: 'Cue wraps English words and 中文文本。\nSource line break    with spaces.',
-      },
-      {
-        label: 'preserved whitespace',
-        value: '  leading  spaces\nsecond\tcolumn  ',
-      },
-      {
-        label: 'CJK punctuation',
-        value: '中文自动换行会保留正确的标点位置，也可以混合 English words。',
-      },
-      {
-        label: 'long word overflow',
-        value: 'supercalifragilisticexpialidocious remains one unbroken word',
-      },
-    ],
-  },
-  {
-    property: 'vertical-align',
-    presentation: ControlPresentation.menu,
-    scope: ControlScope.text,
-    options: [
-      { label: 'baseline', value: 'vertical-baseline' },
-      { label: 'middle', value: 'vertical-middle' },
-      { label: 'top', value: 'vertical-top' },
-      { label: 'bottom', value: 'vertical-bottom' },
-      { label: 'text-top', value: 'vertical-text-top' },
-      { label: 'text-bottom', value: 'vertical-text-bottom' },
-      { label: 'sub', value: 'vertical-sub' },
-      { label: 'super', value: 'vertical-super' },
-      { label: '25%', value: 'vertical-percent' },
-    ],
-  },
-  {
-    property: 'white-space',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.text,
-    options: [
-      { label: 'normal', value: 'white-space-normal' },
-      { label: 'nowrap', value: 'white-space-nowrap' },
-      { label: 'pre', value: 'white-space-pre' },
-      { label: 'pre-wrap', value: 'white-space-pre-wrap' },
-      { label: 'pre-line', value: 'white-space-pre-line' },
-    ],
-  },
-  {
-    property: 'width',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.text,
-    options: [
-      { label: '200px', value: 'width-200' },
-      { label: '280px', value: 'width-280' },
-      { label: '400px', value: 'width-400' },
-    ],
-  },
-  {
-    property: 'text-align',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.text,
-    options: [
-      { label: 'start', value: 'text-align-start' },
-      { label: 'center', value: 'text-align-center' },
-      { label: 'end', value: 'text-align-end' },
-      { label: 'left', value: 'text-align-left' },
-      { label: 'right', value: 'text-align-right' },
-    ],
-  },
-  {
-    property: 'font-size',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.text,
-    options: [
-      { label: '14px', value: 'font-size-14' },
-      { label: '20px', value: 'font-size-20' },
-      { label: '28px', value: 'font-size-28' },
-    ],
-  },
-  {
-    property: 'line-height',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.text,
-    options: [
-      { label: 'normal', value: 'line-height-normal' },
-      { label: '28px', value: 'line-height-28' },
-      { label: '40px', value: 'line-height-40' },
-    ],
-  },
-  {
-    property: 'font-family',
-    presentation: ControlPresentation.menu,
-    scope: ControlScope.textFont,
-    options: [
-      { label: 'sans', value: 'sans-serif' },
-      { label: 'serif', value: 'serif' },
-      { label: 'mono', value: 'monospace' },
-      { label: 'Smiley Sans TTF', value: 'smiley' },
-      { label: 'Maoken TTF', value: 'maoken' },
-    ],
-  },
-  {
-    property: 'color',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.text,
-    options: [
-      { label: 'slate', value: 'text-color-slate' },
-      { label: 'sky', value: 'text-color-sky' },
-      { label: 'amber', value: 'text-color-amber' },
-      { label: 'green', value: 'text-color-green' },
-    ],
-  },
-  {
-    property: 'font-weight',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.text,
-    options: [
-      { label: 'normal', value: 'font-weight-normal' },
-      { label: 'bold', value: 'font-weight-bold' },
-      { label: '300', value: 'font-weight-300' },
-      { label: '900', value: 'font-weight-900' },
-    ],
-  },
-  {
-    property: 'stroke width',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.text,
-    options: [
-      { label: '0', value: 'stroke-none' },
-      { label: '1px', value: 'stroke-1' },
-      { label: '2px', value: 'stroke-2' },
-      { label: '4px', value: 'stroke-4' },
-    ],
-  },
-  {
-    property: 'stroke color',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.text,
-    options: [
-      { label: 'dark', value: 'stroke-color-dark' },
-      { label: 'purple', value: 'stroke-color-purple' },
-      { label: 'orange', value: 'stroke-color-orange' },
-    ],
-  },
-];
-
-const positionGalleryControlSpecs: readonly GalleryControlSpec[] = [
-  {
-    property: 'position',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.position,
-    options: [
-      { label: 'absolute', value: 'position-absolute' },
-      { label: 'relative', value: 'position-relative' },
-      { label: 'static', value: 'position-static' },
-    ],
-  },
-  {
-    property: 'insets',
-    presentation: ControlPresentation.menu,
-    scope: ControlScope.position,
-    options: [
-      { label: 'top: 30px; left: 30px', value: 'anchor-top-left' },
-      { label: 'bottom: 20px; right: 20px', value: 'anchor-bottom-right' },
-      { label: 'top: 25%; left: 50%', value: 'anchor-percent' },
-      { label: 'inset: 30px 24px; auto size', value: 'anchor-stretch' },
-      { label: 'top: -12px; left: -12px', value: 'anchor-negative' },
-    ],
-  },
-];
-
-const styleApiGalleryControlSpecs: readonly GalleryControlSpec[] = [
-  {
-    property: 'style overrides',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.styleApi,
-    options: [
-      { label: 'apply', value: 'applied' },
-      { label: 'clear', value: 'cleared' },
-    ],
-  },
-  {
-    property: 'width',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.styleApi,
-    options: [
-      { label: '40%', value: '40' },
-      { label: '0', value: '0' },
-      { label: '73%', value: '73' },
-      { label: '100%', value: '100' },
-    ],
-  },
-  {
-    property: 'backgroundColor',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.styleApi,
-    options: [
-      { label: 'sky', value: 'sky' },
-      { label: 'green', value: 'green' },
-      { label: 'amber', value: 'amber' },
-    ],
-  },
-  {
-    property: 'CSS !important',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.styleApi,
-    options: [
-      { label: 'off', value: 'off' },
-      { label: 'on (75%)', value: 'on' },
-    ],
-  },
-];
-
-const imageGalleryControlSpecs: readonly GalleryControlSpec[] = [
-  {
-    property: 'src',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.imageSource,
-    options: [
-      { label: 'relative', value: 'relative' },
-      { label: 'uuid:', value: 'uuid' },
-    ],
-  },
-  {
-    property: 'size',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.image,
-    options: [
-      { label: 'intrinsic', value: 'size-intrinsic' },
-      { label: 'width 120', value: 'size-width' },
-      { label: 'height 120', value: 'size-height' },
-      { label: '180 × 100', value: 'size-stretch' },
-    ],
-  },
-];
-
-const inputGalleryControlSpecs: readonly GalleryControlSpec[] = [
-  {
-    property: 'example',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.input,
-    options: [
-      { label: 'click / hover', value: 'click' },
-      { label: 'propagation', value: 'propagation' },
-      { label: 'drag', value: 'drag' },
-      { label: 'hit regions', value: 'hit' },
-    ],
-  },
-  {
-    property: 'pointer capture',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.input,
-    options: [{ label: 'on', value: 'on' }, { label: 'off', value: 'off' }],
-  },
-  {
-    property: 'propagation',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.input,
-    options: [{ label: 'bubble', value: 'bubble' }, { label: '.stop', value: 'stop' }],
-  },
-  {
-    property: 'front pointer-events',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.input,
-    options: [{ label: 'auto', value: 'auto' }, { label: 'none', value: 'none' }],
-  },
-  {
-    property: 'overflow',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.input,
-    options: [{ label: 'hidden', value: 'hidden' }, { label: 'visible', value: 'visible' }],
-  },
-  {
-    property: 'transform',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.input,
-    options: [{ label: 'rotate(18deg)', value: 'rotated' }, { label: 'none', value: 'none' }],
-  },
-];
-
-const decorationGalleryControlSpecs: readonly GalleryControlSpec[] = [
-  {
-    property: 'border',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.decoration,
-    options: [
-      { label: 'uniform', value: 'border-uniform' },
-      { label: '4 sides', value: 'border-sides' },
-    ],
-  },
-  {
-    property: 'border-radius',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.decoration,
-    options: [
-      { label: 'round', value: 'radius-round' },
-      { label: 'elliptic', value: 'radius-elliptic' },
-      { label: 'percent', value: 'radius-percent' },
-      { label: '0', value: 'radius-square' },
-    ],
-  },
-  {
-    property: 'outline',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.decoration,
-    options: [
-      { label: 'none', value: 'outline-none' },
-      { label: 'solid', value: 'outline-solid' },
-      { label: 'offset', value: 'outline-offset' },
-    ],
-  },
-  {
-    property: 'box-shadow',
-    presentation: ControlPresentation.menu,
-    scope: ControlScope.decoration,
-    options: [
-      { label: 'none', value: 'shadow-none' },
-      { label: 'outer', value: 'shadow-outer' },
-      { label: 'multiple', value: 'shadow-multiple' },
-      { label: 'inset', value: 'shadow-inset' },
-      { label: 'outer + inset', value: 'shadow-mixed' },
-    ],
-  },
-  {
-    property: 'background-image',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.decoration,
-    options: [
-      { label: 'none', value: 'background-color-only' },
-      { label: 'texture', value: 'background-texture' },
-      { label: 'gradient', value: 'background-gradient' },
-    ],
-  },
-  {
-    property: 'overflow',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.decoration,
-    options: [
-      { label: 'normal', value: 'overflow-normal' },
-      { label: 'visible', value: 'overflow-visible' },
-      { label: 'hidden', value: 'overflow-hidden' },
-    ],
-  },
-  {
-    property: 'transform',
-    presentation: ControlPresentation.menu,
-    scope: ControlScope.decoration,
-    options: [
-      { label: 'none', value: 'transform-none' },
-      { label: 'rotate', value: 'transform-rotate' },
-      { label: 'scale', value: 'transform-scale' },
-      { label: 'translate', value: 'transform-translate' },
-    ],
-  },
-  {
-    property: '-cue-opacity',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.decoration,
-    options: [
-      { label: '1', value: 'cue-opacity-full' },
-      { label: '0.5', value: 'cue-opacity-half' },
-      { label: '0.25', value: 'cue-opacity-quarter' },
-      { label: '0', value: 'cue-opacity-zero' },
-    ],
-  },
-  {
-    property: 'z-index',
-    presentation: ControlPresentation.inline,
-    scope: ControlScope.decoration,
-    options: [
-      { label: 'auto', value: 'z-auto' },
-      { label: '1 (front)', value: 'z-front' },
-    ],
-  },
-];
-
-function createGalleryControls(
-  specs: readonly GalleryControlSpec[],
-): GalleryControl[] {
-  return specs.map((spec) => {
-    const initialOption = spec.options[0];
-    if (!initialOption) {
-      throw new Error(`Gallery control "${spec.property}" requires an option.`);
-    }
-    return {
-      ...spec,
-      selected: ref(initialOption.value),
-    };
-  });
-}
+const galleries: Readonly<Record<string, Component>> = {
+  decoration: decorationPlayground,
+  flex: flexPlayground,
+  text: textPlayground,
+  image: imagePlayground,
+  position: positionPlayground,
+  'style-api': styleApiPlayground,
+  input: inputPlayground,
+  button: buttonPlayground,
+  toggle: togglePlayground,
+  slider: sliderPlayground,
+  select: selectPlayground,
+  'text-input': textInputPlayground,
+  'number-input': numberInputPlayground,
+};
 
 async function mountCueExample(scene: Scene): Promise<void> {
   const camera = scene.getChildByName('Main Camera')?.getComponent(Camera);
@@ -721,166 +90,70 @@ async function mountCueExample(scene: Scene): Promise<void> {
     for (const font of importedFonts) font.dispose();
     return;
   }
-  const selectedPage = ref(GalleryPage.flex);
-  const builtinGalleries: BuiltinControlGallery[] = builtinControlGallerySpecs.map(spec => ({
-    ...spec,
-    externalRevision: ref(0),
-    generation: ref(0),
-    controls: createGalleryControls([
-      {
-        property: 'disabled', scope: ControlScope.control, presentation: ControlPresentation.inline,
-        options: [{ label: 'false', value: 'off' }, { label: 'true', value: 'on' }],
-      },
-      {
-        property: 'external value', scope: ControlScope.control, presentation: ControlPresentation.inline,
-        options: [{ label: 'first', value: 'first' }, { label: 'second', value: 'second' }, { label: 'empty / zero', value: 'empty' }],
-      },
-      {
-        property: 'mode', scope: ControlScope.control, presentation: ControlPresentation.menu,
-        options: spec.modes,
-      },
-      {
-        property: 'custom width', scope: ControlScope.control, presentation: ControlPresentation.inline,
-        options: [{ label: '280 px', value: '280' }, { label: '200 px', value: '200' }],
-      },
-    ]),
-  }));
-  const flexControls = createGalleryControls(flexGalleryControlSpecs);
-  const decorationControls = createGalleryControls(decorationGalleryControlSpecs);
-  const imageControls = createGalleryControls(imageGalleryControlSpecs);
-  const inputControls = createGalleryControls(inputGalleryControlSpecs);
-  const textControls = createGalleryControls(textGalleryControlSpecs);
-  const positionControls = createGalleryControls(positionGalleryControlSpecs);
-  const styleApiControls = createGalleryControls(styleApiGalleryControlSpecs);
-  const textFontControl = textControls.find(control => control.scope === ControlScope.textFont)!;
-  const textContentControl = textControls.find(
-    control => control.scope === ControlScope.textContent,
+
+  const fixtureCamera = mountNativeFixtureCamera(scene, camera);
+  const nativeFixture = mountNativeEditBox(scene, fixtureCamera);
+
+  const cueNode = new Node('Cue Basic Document');
+  cueNode.setPosition(DOCUMENT_ORIGIN.x, DOCUMENT_ORIGIN.y, 0);
+  cueNode.addComponent(UITransform).setContentSize(
+    DOCUMENT_SIZE.width,
+    DOCUMENT_SIZE.height,
   );
-  if (!textContentControl) {
-    throw new Error('Text playground requires a sample control.');
-  }
-  const imageSourceControl = imageControls.find(
-    control => control.scope === ControlScope.imageSource,
-  );
-  if (!imageSourceControl) {
-    throw new Error('Image playground requires a source control.');
-  }
-  const galleryComponent = defineComponent(() => () => {
-    const builtinGallery = builtinGalleries.find(gallery => gallery.value === selectedPage.value);
-    if (builtinGallery) {
-      return h(builtinGallery.component, {
-        key: builtinGallery.generation.value,
-        disabled: builtinGallery.controls[0].selected.value === 'on',
-        sample: builtinGallery.controls[1].selected.value,
-        mode: builtinGallery.controls[2].selected.value,
-        width: Number(builtinGallery.controls[3].selected.value),
-        externalRevision: builtinGallery.externalRevision.value,
-      });
-    }
-    return selectedPage.value === GalleryPage.input
-      ? h(inputPlayground, {
-        mode: inputControls[0].selected.value,
-        capture: inputControls[1].selected.value === 'on',
-        stopPropagation: inputControls[2].selected.value === 'stop',
-        frontPointerEvents: inputControls[3].selected.value,
-        clipped: inputControls[4].selected.value === 'hidden',
-        transformed: inputControls[5].selected.value === 'rotated',
-      })
-      : selectedPage.value === GalleryPage.position
-      ? h(positionPlayground, {
-        positionClasses: positionControls.map(control => control.selected.value),
-      })
-      : selectedPage.value === GalleryPage.styleApi
-        ? h(styleApiPlayground, {
-          applied: styleApiControls[0].selected.value === 'applied',
-          width: Number(styleApiControls[1].selected.value),
-          color: styleApiControls[2].selected.value,
-          important: styleApiControls[3].selected.value === 'on',
-        })
-      : selectedPage.value === GalleryPage.flex
-      ? h(flexPlayground, {
-        containerClasses: flexControls
-          .filter(control => control.scope === ControlScope.container)
-          .map(control => control.selected.value),
-        featuredItemClasses: flexControls
-          .filter(control => control.scope === ControlScope.featuredItem)
-          .map(control => control.selected.value),
-      })
-      : selectedPage.value === GalleryPage.decoration
-        ? h(decorationPlayground, {
-          decorationClasses: decorationControls.map(
-            control => control.selected.value,
-          ),
-        })
-        : selectedPage.value === GalleryPage.text
-        ? h(textPlayground, {
-          text: textContentControl.selected.value,
-          fontFamily: textFontControl.selected.value === 'smiley'
-            ? importedFonts[0].fontFamily
-            : textFontControl.selected.value === 'maoken'
-              ? importedFonts[1].fontFamily
-              : textFontControl.selected.value,
-          textClasses: textControls
-            .filter(control => control.scope === ControlScope.text)
-            .map(control => control.selected.value),
-        })
-        : h(imagePlayground, {
-          imageClasses: imageControls
-            .filter(control => control.scope === ControlScope.image)
-            .map(control => control.selected.value),
-          source: imageSourceControl.selected.value,
-        })
-  });
-  const cueNode = new Node('Cue Gallery');
-  cueNode.setPosition(-450, 180, 0);
   scene.addChild(cueNode);
-  cueNode.addComponent(CueDocument).mount(galleryComponent);
-  const galleryCamera = mountGalleryControls(
-    scene,
-    camera,
-    selectedPage,
-    decorationControls,
-    flexControls,
-    imageControls,
-    textControls,
-    positionControls,
-    styleApiControls,
-    inputControls,
-    builtinGalleries,
-  );
-  const fitPlaygroundCameras = (): void => {
+  cueNode.addComponent(CueDocument).mount(basicApp, {
+    panels: PANELS,
+    galleries,
+    fonts: {
+      smiley: importedFonts[0].fontFamily,
+      maoken: importedFonts[1].fontFamily,
+    },
+    defaultPanelId: DEFAULT_PANEL_ID,
+    panelBox: PANEL_BOX,
+    nativeArea: {
+      x: NATIVE_AREA.x,
+      titleY: NATIVE_AREA.titleY,
+      titleHeight: NATIVE_AREA.titleHeight,
+      width: NATIVE_AREA.width,
+      slotY: NATIVE_SLOT.y,
+      slotHeight: NATIVE_SLOT.height,
+      noteY: NATIVE_NOTE_Y,
+      noteHeight: NATIVE_AREA.noteHeight,
+    },
+    // Only the six built-in control galleries compare against the native
+    // EditBox, so the fixture follows the selected panel like it did when the
+    // control plane owned one node per page.
+    onNativeFixtureVisibilityChange: (visible: boolean) => {
+      nativeFixture.active = visible;
+    },
+  });
+
+  const fitCameras = (): void => {
     const visibleSize = view.getVisibleSize();
     const orthoHeight = calculateFittedOrthoHeight(
       visibleSize,
       playgroundSafeArea,
     );
     camera.orthoHeight = orthoHeight;
-    galleryCamera.orthoHeight = orthoHeight;
+    fixtureCamera.orthoHeight = orthoHeight;
   };
-  fitPlaygroundCameras();
-  screen.on('window-resize', fitPlaygroundCameras);
+  fitCameras();
+  screen.on('window-resize', fitCameras);
   scene.once(Node.EventType.NODE_DESTROYED, () => {
-    screen.off('window-resize', fitPlaygroundCameras);
+    screen.off('window-resize', fitCameras);
     for (const font of importedFonts) font.dispose();
   });
 
-  console.log('[cue-basic] Flex, Text, Image, Decoration, Position, Style API, and Input playgrounds mounted');
+  console.log('[cue-basic] one Cue document renders the stage and the control plane');
 }
 
-function mountGalleryControls(
-  scene: Scene,
-  mainCamera: Camera,
-  selectedPage: Ref<GalleryPage>,
-  decorationControls: readonly GalleryControl[],
-  flexControls: readonly GalleryControl[],
-  imageControls: readonly GalleryControl[],
-  textControls: readonly GalleryControl[],
-  positionControls: readonly GalleryControl[],
-  styleApiControls: readonly GalleryControl[],
-  inputControls: readonly GalleryControl[],
-  builtinGalleries: readonly BuiltinControlGallery[],
-): Camera {
-  const cameraNode = new Node('Gallery UI Camera');
+/**
+ * The native EditBox must draw above the Cue control plane, so it keeps its own
+ * UI_2D camera. No Cue document renders through this camera: it exists only for
+ * the focus/IME comparison fixture.
+ */
+function mountNativeFixtureCamera(scene: Scene, mainCamera: Camera): Camera {
+  const cameraNode = new Node('Native Fixture Camera');
   const camera = cameraNode.addComponent(Camera);
   camera.projection = Camera.ProjectionType.ORTHO;
   camera.orthoHeight = mainCamera.orthoHeight;
@@ -889,8 +162,11 @@ function mountGalleryControls(
   camera.priority = mainCamera.priority + 1;
   cameraNode.setPosition(0, 0, 10);
   scene.addChild(cameraNode);
+  return camera;
+}
 
-  const canvasNode = new Node('Gallery Control Plane');
+function mountNativeEditBox(scene: Scene, camera: Camera): Node {
+  const canvasNode = new Node('Native Fixture Canvas');
   canvasNode.layer = Layers.Enum.UI_2D;
   canvasNode.addComponent(UITransform).setContentSize(
     playgroundSafeArea.width,
@@ -901,431 +177,30 @@ function mountGalleryControls(
   canvas.cameraComponent = camera;
   scene.addChild(canvasNode);
 
-  const controlX = 270;
-  const flexPanel = createGalleryControlPanel(
-    controlX,
-    'Flex Playground',
-    'Container controls + white-bordered item controls',
-    flexControls,
-  );
-  const textPanel = createGalleryControlPanel(
-    controlX,
-    'Text Playground',
-    'One text box + composable typography controls',
-    textControls,
-  );
-  const imagePanel = createGalleryControlPanel(
-    controlX,
-    'Image Playground',
-    'One cue-image + source and sizing controls',
-    imageControls,
-  );
-  const decorationPanel = createGalleryControlPanel(
-    controlX,
-    'Decoration Playground',
-    'One box + composable border, background, outline, and shadow controls',
-    decorationControls,
-  );
-  const positionPanel = createGalleryControlPanel(
-    controlX,
-    'Position Playground',
-    'Position B; A and C show normal-flow participation',
-    positionControls,
-  );
-  const styleApiPanel = createGalleryControlPanel(
-    controlX,
-    'Style API Playground',
-    'Typed values, clearing overrides, and CSS precedence',
-    styleApiControls,
-  );
-  const inputPanel = createGalleryControlPanel(
-    controlX,
-    'Input Playground',
-    'Interact with Cue on the left; choose event behavior here',
-    inputControls,
-  );
-  canvasNode.addChild(flexPanel);
-  canvasNode.addChild(textPanel);
-  canvasNode.addChild(imagePanel);
-  canvasNode.addChild(decorationPanel);
-  canvasNode.addChild(positionPanel);
-  canvasNode.addChild(styleApiPanel);
-  canvasNode.addChild(inputPanel);
-  const builtinPages = builtinGalleries.map(gallery => {
-    const panel = createGalleryControlPanel(
-      controlX,
-      `${gallery.label} Gallery`,
-      'Native Cue controls on the left; Cocos controls stay here',
-      gallery.controls,
-    );
-    const apply = createButton('Apply external value', 172, 28, new Color(2, 132, 199), () => {
-      gallery.externalRevision.value++;
-    });
-    apply.setPosition(controlX - 92, 30);
-    apply.addChild(createLabel('Apply external value', 11, new Color(241, 245, 249), 164, 24));
-    panel.addChild(apply);
-    const remount = createButton('Remount controls', 172, 28, new Color(124, 58, 237), () => {
-      gallery.generation.value++;
-    });
-    remount.setPosition(controlX + 92, 30);
-    remount.addChild(createLabel('Remount controls', 11, new Color(241, 245, 249), 164, 24));
-    panel.addChild(remount);
-    const explanation = createLabel(
-      'External writes should not emit input/change.\nRemount resets the two instances and event log.',
-      11, new Color(148, 163, 184), 370, 48,
-    );
-    explanation.setPosition(controlX, -17);
-    panel.addChild(explanation);
-    const nativeInputTitle = createLabel('COCOS EDITBOX · focus / IME comparison', 11, new Color(148, 163, 184), 370, 24);
-    nativeInputTitle.setPosition(controlX, -75);
-    panel.addChild(nativeInputTitle);
-    const nativeInput = new Node('Cocos Coexistence EditBox');
-    nativeInput.layer = Layers.Enum.UI_2D;
-    nativeInput.addComponent(UITransform).setContentSize(340, 38);
-    paintRoundedRectangle(nativeInput, 340, 38, new Color(30, 41, 59), 6);
-    const nativeLabel = createLabel('', 15, new Color(226, 232, 240), 320, 32);
-    nativeLabel.getComponent(UITransform)!.setAnchorPoint(0, 1);
-    nativeLabel.getComponent(Label)!.horizontalAlign = Label.HorizontalAlign.LEFT;
-    nativeInput.addChild(nativeLabel);
-    const placeholder = createLabel('Type here, then focus a Cue input', 13, new Color(148, 163, 184), 320, 32);
-    placeholder.getComponent(UITransform)!.setAnchorPoint(0, 1);
-    placeholder.getComponent(Label)!.horizontalAlign = Label.HorizontalAlign.LEFT;
-    nativeInput.addChild(placeholder);
-    const editBox = nativeInput.addComponent(EditBox);
-    editBox.textLabel = nativeLabel.getComponent(Label)!;
-    editBox.placeholderLabel = placeholder.getComponent(Label)!;
-    editBox.placeholder = 'Type here, then focus a Cue input';
-    editBox.inputMode = EditBox.InputMode.SINGLE_LINE;
-    nativeLabel.getComponent(Label)!.verticalAlign = Label.VerticalAlign.CENTER;
-    placeholder.getComponent(Label)!.verticalAlign = Label.VerticalAlign.CENTER;
-    editBox.string = '';
-    nativeInput.setPosition(controlX, -111);
-    panel.addChild(nativeInput);
-    const keyboardNote = createLabel(
-      'Check mouse / touch / keyboard and Chinese IME.\nSwitch pages during editing or dragging to check cleanup.',
-      11, new Color(148, 163, 184), 370, 52,
-    );
-    keyboardNote.setPosition(controlX, -169);
-    panel.addChild(keyboardNote);
-    canvasNode.addChild(panel);
-    return { label: gallery.label, panel, value: gallery.value };
-  });
-
-  const pages = [
-    {
-      label: 'Decoration',
-      panel: decorationPanel,
-      value: GalleryPage.decoration,
-    },
-    {
-      label: 'Flex',
-      panel: flexPanel,
-      value: GalleryPage.flex,
-    },
-    {
-      label: 'Text',
-      panel: textPanel,
-      value: GalleryPage.text,
-    },
-    {
-      label: 'Image',
-      panel: imagePanel,
-      value: GalleryPage.image,
-    },
-    { label: 'Position', panel: positionPanel, value: GalleryPage.position },
-    { label: 'Style API', panel: styleApiPanel, value: GalleryPage.styleApi },
-    { label: 'Input', panel: inputPanel, value: GalleryPage.input },
-    ...builtinPages,
-  ] as const;
-  const pageButtons: Node[] = [];
-  const pageButtonWidth = 61;
-  const pageButtonGap = 4;
-  const pageButtonsLeft = controlX
-    - (pageButtonWidth * 7 + pageButtonGap * 6) / 2;
-  const repaintPageSelection = (): void => {
-    for (const [index, page] of pages.entries()) {
-      page.panel.active = page.value === selectedPage.value;
-      const button = pageButtons[index];
-      if (button) {
-        paintRoundedRectangle(
-          button,
-          pageButtonWidth,
-          22,
-          page.value === selectedPage.value
-            ? new Color(124, 58, 237, 255)
-            : new Color(30, 41, 59, 255),
-          4,
-        );
-      }
-    }
-  };
-  for (const [index, page] of pages.entries()) {
-    const button = createButton(
-      `${page.label} Gallery`,
-      pageButtonWidth,
-      22,
-      new Color(30, 41, 59, 255),
-      () => {
-        selectedPage.value = page.value;
-        repaintPageSelection();
-      },
-    );
-    button.setPosition(
-      pageButtonsLeft
-        + pageButtonWidth / 2
-        + (index < 7 ? index : index - 7) * (pageButtonWidth + pageButtonGap),
-      index < 7 ? 232 : -236,
-    );
-    button.addChild(createLabel(
-      page.label,
-      8,
-      new Color(241, 245, 249, 255),
-      pageButtonWidth - 4,
-      20,
-    ));
-    pageButtons.push(button);
-    canvasNode.addChild(button);
-  }
-  repaintPageSelection();
-  for (const [caption, y] of [['BASE', 232], ['CONTROLS', -236]] as const) {
-    const groupLabel = createLabel(caption, 8, new Color(148, 163, 184), 64, 20);
-    groupLabel.setPosition(pageButtonsLeft - 39, y);
-    canvasNode.addChild(groupLabel);
-  }
-  return camera;
-}
-
-function createGalleryControlPanel(
-  controlX: number,
-  titleText: string,
-  subtitleText: string,
-  controls: readonly GalleryControl[],
-): Node {
-  const root = new Node(`${titleText} Controls`);
-  root.layer = Layers.Enum.UI_2D;
-  const panel = createPanel(400, 420, new Color(17, 24, 39, 245));
-  panel.setPosition(controlX, 0);
-  root.addChild(panel);
-
-  const title = createLabel(
-    titleText,
-    13,
-    new Color(241, 245, 249, 255),
-    370,
-    22,
-  );
-  title.setPosition(controlX, 197);
-  root.addChild(title);
-
-  const subtitle = createLabel(
-    subtitleText,
-    7,
-    new Color(148, 163, 184, 255),
-    370,
-    14,
-  );
-  subtitle.setPosition(controlX, 180);
-  root.addChild(subtitle);
-
-  const menuLayer = new Node('Control Menus');
-  menuLayer.layer = Layers.Enum.UI_2D;
-  const menus: Node[] = [];
-  const controlY = 151;
-  const controlSpacing = 25;
-
-  for (const [index, control] of controls.entries()) {
-    const y = controlY - index * controlSpacing;
-    if (control.presentation === ControlPresentation.inline) {
-      const inlineControl = createInlineChoiceControl(control, 370, 21);
-      inlineControl.setPosition(controlX, y);
-      root.addChild(inlineControl);
-      continue;
-    }
-
-    const option = selectedOption(control);
-    const selectedLabel = createLabel(
-      `${control.property}: ${option.label}`,
-      8,
-      new Color(226, 232, 240, 255),
-      230,
-      18,
-    );
-    const menu = createControlMenu(
-      control,
-      selectedLabel,
-      menus,
-      controlX - 215,
-      y,
-    );
-    menus.push(menu);
-
-    const color = control.scope === ControlScope.featuredItem
-      ? new Color(6, 78, 59, 255)
-      : new Color(51, 65, 85, 255);
-    const button = createButton(
-      control.property,
-      370,
-      21,
-      color,
-      () => {
-        const wasActive = menu.active;
-        for (const otherMenu of menus) {
-          otherMenu.active = false;
-        }
-        menu.active = !wasActive;
-      },
-    );
-    button.setPosition(controlX, y);
-    button.addChild(selectedLabel);
-    root.addChild(button);
-  }
-
-  for (const menu of menus) {
-    menuLayer.addChild(menu);
-  }
-  root.addChild(menuLayer);
-  return root;
-}
-
-function createInlineChoiceControl(
-  control: GalleryControl,
-  width: number,
-  height: number,
-): Node {
-  const row = new Node(`${control.property} Choices`);
-  row.layer = Layers.Enum.UI_2D;
-  row.addComponent(UITransform).setContentSize(width, height);
-
-  const propertyWidth = 98;
-  const gap = 3;
-  const propertyLabel = createLabel(
-    control.property,
-    7,
-    new Color(203, 213, 225, 255),
-    propertyWidth,
-    height,
-  );
-  propertyLabel.setPosition(-width / 2 + propertyWidth / 2, 0);
-  propertyLabel.getComponent(Label)!.horizontalAlign = Label.HorizontalAlign.LEFT;
-  row.addChild(propertyLabel);
-
-  const optionsWidth = width - propertyWidth - gap;
-  const optionWidth = (
-    optionsWidth - gap * (control.options.length - 1)
-  ) / control.options.length;
-  const optionsLeft = -width / 2 + propertyWidth + gap;
-  const optionButtons: Array<{
-    node: Node;
-    option: GalleryControlOption;
-  }> = [];
-  const selectedColor = control.scope === ControlScope.featuredItem
-    ? new Color(5, 150, 105, 255)
-    : new Color(2, 132, 199, 255);
-  const idleColor = new Color(30, 41, 59, 255);
-  const repaintChoices = (): void => {
-    for (const choice of optionButtons) {
-      paintRoundedRectangle(
-        choice.node,
-        optionWidth,
-        height,
-        choice.option.value === control.selected.value
-          ? selectedColor
-          : idleColor,
-        4,
-      );
-    }
-  };
-
-  for (const [index, option] of control.options.entries()) {
-    const button = createButton(
-      `${control.property}: ${option.label}`,
-      optionWidth,
-      height,
-      idleColor,
-      () => {
-        control.selected.value = option.value;
-        repaintChoices();
-      },
-    );
-    button.setPosition(
-      optionsLeft + optionWidth / 2 + index * (optionWidth + gap),
-      0,
-    );
-    button.addChild(createLabel(
-      option.label,
-      7,
-      new Color(241, 245, 249, 255),
-      optionWidth - 4,
-      height - 2,
-    ));
-    optionButtons.push({ node: button, option });
-    row.addChild(button);
-  }
-  repaintChoices();
-  return row;
-}
-
-function createControlMenu(
-  control: GalleryControl,
-  selectedLabel: Node,
-  menus: readonly Node[],
-  x: number,
-  controlY: number,
-): Node {
-  const menu = new Node(`${control.property} Options`);
-  menu.layer = Layers.Enum.UI_2D;
-  const menuY = Math.min(
-    165,
-    Math.max(-180 + (control.options.length - 1) * 20, controlY),
-  );
-  menu.setPosition(x, menuY);
-  menu.active = false;
-
-  for (const [index, option] of control.options.entries()) {
-    const optionButton = createButton(
-      `${control.property}: ${option.label}`,
-      175,
-      18,
-      new Color(30, 41, 59, 255),
-      () => {
-        control.selected.value = option.value;
-        selectedLabel.getComponent(Label)!.string
-          = `${control.property}: ${option.label}`;
-        for (const otherMenu of menus) {
-          otherMenu.active = false;
-        }
-        menu.active = false;
-      },
-    );
-    optionButton.setPosition(0, -index * 20);
-    optionButton.addChild(createLabel(
-      option.label,
-      8,
-      new Color(226, 232, 240, 255),
-      165,
-      16,
-    ));
-    menu.addChild(optionButton);
-  }
-  return menu;
-}
-
-function selectedOption(control: GalleryControl): GalleryControlOption {
-  const option = control.options.find(
-    candidate => candidate.value === control.selected.value,
-  );
-  if (!option) {
-    throw new Error(`Gallery control "${control.property}" has no selected option.`);
-  }
-  return option;
-}
-
-function createPanel(width: number, height: number, color: Color): Node {
-  const node = new Node('Control Panel Background');
-  node.layer = Layers.Enum.UI_2D;
-  node.addComponent(UITransform).setContentSize(width, height);
-  paintRoundedRectangle(node, width, height, color, 10);
-  return node;
+  const placement = nativeInputPlacement();
+  const nativeInput = new Node('Cocos Coexistence EditBox');
+  nativeInput.layer = Layers.Enum.UI_2D;
+  nativeInput.addComponent(UITransform).setContentSize(placement.width, placement.height);
+  paintRoundedRectangle(nativeInput, placement.width, placement.height, new Color(30, 41, 59), 6);
+  const nativeLabel = createLabel('', 15, new Color(226, 232, 240), 320, 32);
+  nativeLabel.getComponent(UITransform)!.setAnchorPoint(0, 1);
+  nativeLabel.getComponent(Label)!.horizontalAlign = Label.HorizontalAlign.LEFT;
+  nativeInput.addChild(nativeLabel);
+  const placeholder = createLabel('Type here, then focus a Cue input', 13, new Color(148, 163, 184), 320, 32);
+  placeholder.getComponent(UITransform)!.setAnchorPoint(0, 1);
+  placeholder.getComponent(Label)!.horizontalAlign = Label.HorizontalAlign.LEFT;
+  nativeInput.addChild(placeholder);
+  const editBox = nativeInput.addComponent(EditBox);
+  editBox.textLabel = nativeLabel.getComponent(Label)!;
+  editBox.placeholderLabel = placeholder.getComponent(Label)!;
+  editBox.placeholder = 'Type here, then focus a Cue input';
+  editBox.inputMode = EditBox.InputMode.SINGLE_LINE;
+  nativeLabel.getComponent(Label)!.verticalAlign = Label.VerticalAlign.CENTER;
+  placeholder.getComponent(Label)!.verticalAlign = Label.VerticalAlign.CENTER;
+  editBox.string = '';
+  nativeInput.setPosition(placement.x, placement.y);
+  canvasNode.addChild(nativeInput);
+  return canvasNode;
 }
 
 function paintRoundedRectangle(
@@ -1340,24 +215,6 @@ function paintRoundedRectangle(
   graphics.fillColor = color;
   graphics.roundRect(-width / 2, -height / 2, width, height, radius);
   graphics.fill();
-}
-
-function createButton(
-  name: string,
-  width: number,
-  height: number,
-  color: Color,
-  onClick: () => void,
-): Node {
-  const node = new Node(name);
-  node.layer = Layers.Enum.UI_2D;
-  node.addComponent(UITransform).setContentSize(width, height);
-  paintRoundedRectangle(node, width, height, color, 4);
-  const button = node.addComponent(Button);
-  button.transition = Button.Transition.SCALE;
-  button.zoomScale = 0.97;
-  node.on(Button.EventType.CLICK, onClick);
-  return node;
 }
 
 function createLabel(
