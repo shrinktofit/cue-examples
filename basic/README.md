@@ -1,13 +1,12 @@
 # Basic Cue galleries
 
-The playground `.cue` files in src/ are compiled by the workspace build into the ignored
-src/generated/cue directory. src/index.ts imports those generated facades plus
-`src/app.cue`, and mounts one CueDocument that renders both the gallery stage and the control plane.
+The playground `.cue` files in src/ are imported directly by src/index.ts through
+`@bsgames/oms-plugin-cue`. One CueDocument renders both the gallery stage and the control plane.
 
-This is intentionally a temporary pre-OMS-compiler workflow. The .cue compiler remains a library,
-the CLI only writes its returned artifacts, and OMS continues to own the project module graph.
+The compiler remains a library. The plugin supplies its generated modules in memory to OMS,
+which owns the project module graph, dependency watching, reload and production builds.
 
-Install the locally linked extensions and generate the temporary Cue modules with:
+Install the locally linked extensions and verify the OMS script builds with:
 
 ```powershell
 node U:\Repos\Bluesquall\exm\packages\exm\bin\exm.js install -C U:\Repos\Bluesquall\cc-extensions\cc-extension-cue-examples\basic
@@ -30,8 +29,18 @@ as props.
   `vertical-align` controls the highlighted spans / atomic boxes. Combine it with width,
   font size and line height; `<br>` remains a forced break in every white-space mode.
   Smiley Sans and Maoken source TTF assets are loaded before mounting; select them in the font-family menu.
+  `overflow-wrap`, `word-break`, and draft `text-fit` are independent inline choices. To compare them:
+  choose **long word / fitting**, then switch `anywhere` vs `break-all` at 200px;
+  choose **nowrap game label** with `white-space: nowrap` and `text-fit: shrink` to fit a single line;
+  choose **consistent multiline fit** with `white-space: pre` to see one scale shared by all lines.
+  Width, font size, line height and alignment still compose with these controls.
+  Shrink runs after wrapping, never enlarges text, and leaves fixed pixel line-height unchanged.
 - Image Playground contains one `cue-image` with controls for a relative-path SpriteFrame, an
-  explicit `uuid:` SpriteFrame, intrinsic sizing, one-axis proportional sizing, and explicit stretch.
+  explicit `uuid:` SpriteFrame, intrinsic sizing, one-axis proportional sizing, and fixed boxes.
+  Combine `object-fit: fill / contain` with the source and size choices: `relative` is a tall scrap icon,
+  `wide` is a rocket, and `small` is a parachute that enlarges in the 240 × 240 box.
+  The gray background shows the element's content box; contain centers the image inside it without
+  changing that box. Switching `uuid:` / `wide` / `small` reuses the same image element.
 - Decoration Playground contains composable border, radius, outline, shadow, background, clipping, transform,
   and `-cue-opacity` controls.
 - Position Playground contains A/B/C boxes. Change B's position between static, relative and absolute,
@@ -80,11 +89,11 @@ and arrow keys must not activate a different control. Switch pages or remount du
 selection, a popup or a drag; the new page and native EditBox must remain usable, with no duplicate
 listeners or stale capture/composition state.
 
-After building the sibling Cue packages, regenerate these pages with `node --run build` from the
-workspace root or `node --run compile:controls` from basic. The CLI still writes ignored JavaScript
-into src/generated/cue; OMS continues to own the module graph.
+After building the sibling Cue packages, run `node --run build` from the workspace root or basic.
+This uses the public OMS worker for development and production builds; no Cue artifacts are written
+into src. When the editor is running, OMS watches the original sources and their image metadata.
 
-`node --run test:controls` from basic runs the renderer integration checks in
+`node --run test` from basic runs all renderer smoke tests through OMS headless, including
 [scripts/control-smoke.ts](scripts/control-smoke.ts). They verify real built-in element instances,
 external values, disabled state, event ordering, immediate/lazy model wiring, instance isolation,
 remounting and cleanup through public APIs. Pointer routing, actual keyboard focus, native input
@@ -170,6 +179,22 @@ An optional third argument selects the screenshot directory; otherwise screensho
 clicks, hover, propagation, captured dragging beyond the canvas, button chords, blur cancellation,
 transformed/clipped hits, inherited `pointer-events`, and public CueDocument disable/unmount cleanup.
 Assertions inspect only the public Cue element tree and Cocos scene APIs.
+
+## Browser image fitting regression
+
+With Preview running, the image regression clicks the Image tab and combines wide, tall and small
+sources with 180 × 100 / 240 × 240 boxes and `object-fit: fill / contain`:
+
+```powershell
+. 'U:\codex-prelude.ps1'
+$env:PLAYWRIGHT_BROWSERS_PATH = 'U:\AgentTools\playwright\browsers'
+node scripts/verify-image-fit-preview.ts 'http://127.0.0.1:7457/' 'U:\AgentTools\playwright\node_modules\playwright'
+```
+
+It verifies rendered image pixels against the expected fitted rectangle in all twelve combinations,
+including centering, resizing and small-image upscaling. Screenshots go to the ignored
+`basic/temp/input-preview/` directory; an optional third argument changes the output directory.
+It uses the existing Preview and shared Playwright installation, without launching Vortex.
 
 ## Browser text regression
 

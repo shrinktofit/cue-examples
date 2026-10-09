@@ -52,7 +52,9 @@ export function createControlPlaneClicker(page: any, documentNodeName: string) {
       if (!hostNode) throw new Error('Missing Cue document: ' + nodeName);
       const camera = scene.renderScene.cameras
         .find((camera: any) => camera.visibility & hostNode.layer);
-      const world = cc.Vec3.transformMat4(new cc.Vec3(), new cc.Vec3(x, y, 0), hostNode.worldMatrix);
+      // clickCue has already converted to world space; applying the document
+      // matrix here would translate by DOCUMENT_ORIGIN a second time.
+      const world = new cc.Vec3(x, y, 0);
       const screen = camera.worldToScreen(new cc.Vec3(), world);
       const rect = cc.game.canvas.getBoundingClientRect();
       return {

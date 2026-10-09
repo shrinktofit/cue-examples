@@ -1,4 +1,5 @@
-import playerProfile from './generated/cue/player-profile.cue.js';
+import playerProfile from './cases/player-profile/player-profile.cue';
+import itemHotbar from './cases/item-hotbar/item-hotbar.cue';
 
 export interface ShowcaseFonts {
   level: string;
@@ -12,5 +13,11 @@ export const showcaseCases = [
     label: 'Player profile',
     description: 'Lobby identity, level badge, and reactive experience bar',
     component: playerProfile,
+  },
+  {
+    id: 'item-hotbar',
+    label: 'Item hotbar',
+    description: 'Four reactive item slots, independent cooldowns, charges and stack counts',
+    component: itemHotbar,
   },
 ];

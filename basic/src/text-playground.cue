@@ -94,6 +94,13 @@ watchEffect(() => {
   white-space: normal;
 }
 
+.overflow-wrap-normal { overflow-wrap: normal; }
+.overflow-wrap-anywhere { overflow-wrap: anywhere; }
+.word-break-normal { word-break: normal; }
+.word-break-break-all { word-break: break-all; }
+.text-fit-none { text-fit: none; }
+.text-fit-shrink { text-fit: shrink; }
+
 .white-space-nowrap {
   white-space: nowrap;
 }

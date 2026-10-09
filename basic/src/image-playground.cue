@@ -3,6 +3,11 @@ defineProps<{
   imageClasses: readonly string[];
   source: string;
 }>();
+const sources: Record<string, string> = {
+  uuid: 'uuid:59f31c06-0189-4865-a7cb-f30a36821b12@f9941',
+  wide: 'uuid:146aea33-f577-47d0-9922-c831597049c7@f9941',
+  small: 'uuid:47e5ea42-9e2d-42d2-b125-b58b0e5eaaa5@f9941',
+};
 </script>
 
 <template>
@@ -16,7 +21,7 @@ defineProps<{
       <cue-image
         v-else
         :class="['image', imageClasses]"
-        src="uuid:59f31c06-0189-4865-a7cb-f30a36821b12@f9941"
+        :src="sources[source]"
       />
     </div>
   </div>
@@ -50,6 +55,7 @@ defineProps<{
 
 .image {
   display: block;
+  background-color: #475569;
 }
 
 .size-intrinsic {
@@ -71,4 +77,17 @@ defineProps<{
   width: 180px;
   height: 100px;
 }
+
+.size-square {
+  width: 120px;
+  height: 120px;
+}
+
+.size-large {
+  width: 240px;
+  height: 240px;
+}
+
+.fit-fill { object-fit: fill; }
+.fit-contain { object-fit: contain; }
 </style>

@@ -13,20 +13,20 @@ import {
   Text,
   type CueNode,
 } from '@bsgames/cue';
-import basicApp from '../src/generated/cue/app.cue.js';
-import buttonPlayground from '../src/generated/cue/button-playground.cue.js';
-import decorationPlayground from '../src/generated/cue/decoration-playground.cue.js';
-import flexPlayground from '../src/generated/cue/flex-playground.cue.js';
-import imagePlayground from '../src/generated/cue/image-playground.cue.js';
-import inputPlayground from '../src/generated/cue/input-playground.cue.js';
-import numberInputPlayground from '../src/generated/cue/number-input-playground.cue.js';
-import positionPlayground from '../src/generated/cue/position-playground.cue.js';
-import selectPlayground from '../src/generated/cue/select-playground.cue.js';
-import sliderPlayground from '../src/generated/cue/slider-playground.cue.js';
-import styleApiPlayground from '../src/generated/cue/style-api-playground.cue.js';
-import textInputPlayground from '../src/generated/cue/text-input-playground.cue.js';
-import textPlayground from '../src/generated/cue/text-playground.cue.js';
-import togglePlayground from '../src/generated/cue/toggle-playground.cue.js';
+import basicApp from '../src/app.cue';
+import buttonPlayground from '../src/button/button-playground.cue';
+import decorationPlayground from '../src/decoration-playground.cue';
+import flexPlayground from '../src/flex-playground.cue';
+import imagePlayground from '../src/image-playground.cue';
+import inputPlayground from '../src/input-playground.cue';
+import numberInputPlayground from '../src/number-input/number-input-playground.cue';
+import positionPlayground from '../src/position-playground.cue';
+import selectPlayground from '../src/select/select-playground.cue';
+import sliderPlayground from '../src/slider/slider-playground.cue';
+import styleApiPlayground from '../src/style-api-playground.cue';
+import textInputPlayground from '../src/text-input/text-input-playground.cue';
+import textPlayground from '../src/text-playground.cue';
+import togglePlayground from '../src/toggle/toggle-playground.cue';
 import { DEFAULT_PANEL_ID, PANELS } from '../src/control-plane-model.ts';
 import {
   NATIVE_AREA,

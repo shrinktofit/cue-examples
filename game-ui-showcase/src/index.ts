@@ -1,4 +1,4 @@
-import showcaseApp from './generated/cue/app.cue.js';
+import showcaseApp from './app.cue';
 import { showcaseCases, type ShowcaseFonts } from './showcase-state.ts';
 import {
   Camera,

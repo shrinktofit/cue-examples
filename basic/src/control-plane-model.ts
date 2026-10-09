@@ -230,9 +230,12 @@ const textControlSpecs: readonly ControlSpec[] = [
         value: '中文自动换行会保留正确的标点位置，也可以混合 English words。',
       },
       {
-        label: 'long word overflow',
+        label: 'long word / fitting',
         value: 'supercalifragilisticexpialidocious remains one unbroken word',
       },
+      { label: 'nowrap game label', value: 'Commander Alexandra · Level 128' },
+      { label: 'consistent multiline fit', value: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\nShort line\nBoth lines keep one font scale' },
+      { label: 'grapheme clusters', value: 'CaféCaféCaféCafé 👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦' },
     ],
   },
   {
@@ -261,6 +264,33 @@ const textControlSpecs: readonly ControlSpec[] = [
       { label: 'pre', value: 'white-space-pre' },
       { label: 'pre-wrap', value: 'white-space-pre-wrap' },
       { label: 'pre-line', value: 'white-space-pre-line' },
+    ],
+  },
+  {
+    property: 'overflow-wrap',
+    presentation: 'inline',
+    scope: 'text',
+    options: [
+      { label: 'normal', value: 'overflow-wrap-normal' },
+      { label: 'anywhere', value: 'overflow-wrap-anywhere' },
+    ],
+  },
+  {
+    property: 'word-break',
+    presentation: 'inline',
+    scope: 'text',
+    options: [
+      { label: 'normal', value: 'word-break-normal' },
+      { label: 'break-all', value: 'word-break-break-all' },
+    ],
+  },
+  {
+    property: 'text-fit (draft)',
+    presentation: 'inline',
+    scope: 'text',
+    options: [
+      { label: 'none', value: 'text-fit-none' },
+      { label: 'shrink', value: 'text-fit-shrink' },
     ],
   },
   {
@@ -437,17 +467,30 @@ const imageControlSpecs: readonly ControlSpec[] = [
     options: [
       { label: 'relative', value: 'relative' },
       { label: 'uuid:', value: 'uuid' },
+      { label: 'wide', value: 'wide' },
+      { label: 'small', value: 'small' },
     ],
   },
   {
     property: 'size',
-    presentation: 'inline',
+    presentation: 'menu',
     scope: 'image',
     options: [
       { label: 'intrinsic', value: 'size-intrinsic' },
       { label: 'width 120', value: 'size-width' },
       { label: 'height 120', value: 'size-height' },
       { label: '180 × 100', value: 'size-stretch' },
+      { label: '120 × 120', value: 'size-square' },
+      { label: '240 × 240', value: 'size-large' },
+    ],
+  },
+  {
+    property: 'object-fit',
+    presentation: 'inline',
+    scope: 'image',
+    options: [
+      { label: 'fill', value: 'fit-fill' },
+      { label: 'contain', value: 'fit-contain' },
     ],
   },
 ];
@@ -720,7 +763,7 @@ export const PANELS: readonly PanelSpec[] = [
     label: 'Image',
     group: 'base',
     title: 'Image Playground',
-    subtitle: 'One cue-image + source and sizing controls',
+    subtitle: 'One cue-image + source, box size and object-fit; gray shows the content box',
     kind: 'stage',
     controls: imageControlSpecs,
   },

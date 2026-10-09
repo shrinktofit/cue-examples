@@ -15,7 +15,7 @@ import {
   nextTick,
   type CueNode,
 } from '@bsgames/cue';
-import showcaseApp from '../src/generated/cue/app.cue.js';
+import showcaseApp from '../src/app.cue';
 import { showcaseCases } from '../src/showcase-state.ts';
 
 function textContent(node: CueNode): string {
@@ -148,6 +148,48 @@ assert.ok(textContent(root).includes('42'));
 assert.equal(root.children[0], mountedCase);
 avatar.dispatchEvent(new CueEvent('click', { bubbles: true }));
 await nextTick();
+
+/// @case Select the second tab and operate the compiled Cue hotbar, not just its state module.
+/// @expect The profile panel unmounts; charges, selection, disabled Use and reload react in the retained slot tree.
+clickButton(root, 'Item hotbar');
+await nextTick();
+clickButton(root, '暂停');
+clickButton(root, '重置装备');
+await nextTick();
+assert.ok(!textContent(root).includes('PROFILE STATE'));
+assert.ok(textContent(root).includes('ITEM HOTBAR'));
+const slotButtons = elements(root).filter((element) => element instanceof CueButtonElement && elements(element).some((child) => child instanceof CueImageElement));
+assert.equal(slotButtons.length, 4);
+clickButton(root, '使用 火箭');
+await nextTick();
+assert.equal(textContent(slotButtons[0]!), '2');
+const useButton = elements(root).find((element) => element instanceof CueButtonElement && textContent(element) === '使用 火箭') as CueButtonElement;
+assert.equal(useButton.disabled, true);
+clickButton(root, '+0.2s');
+await nextTick();
+assert.equal(useButton.disabled, false);
+slotButtons[2]!.dispatchEvent(new CueEvent('click', { bubbles: true }));
+await nextTick();
+clickButton(root, '使用 激光炮');
+await nextTick();
+assert.equal(textContent(slotButtons[2]!), '3.0');
+clickButton(root, '+0.5s');
+await nextTick();
+assert.equal(textContent(slotButtons[2]!), '2.5');
+clickButton(root, '隐藏 HUD');
+await nextTick();
+clickButton(root, '+1.5s');
+await nextTick();
+clickButton(root, '显示 HUD');
+await nextTick();
+assert.ok(textContent(root).includes('1.0'));
+clickButton(root, 'Player profile');
+await nextTick();
+assert.ok(textContent(root).includes('PROFILE STATE'));
+assert.ok(textContent(root).includes('一位名字很长的太空探险家'));
+clickButton(root, 'Item hotbar');
+await nextTick();
+assert.ok(textContent(root).includes('装备就绪'));
 
 app.unmount();
 assert.deepEqual(root.children, []);

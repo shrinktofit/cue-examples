@@ -35,7 +35,7 @@ const experience = ref(635);
 const currentCase = computed(() => props.cases.find((entry) => entry.id === selectedCase.value));
 const experienceRatio = computed(() => experience.value / props.experienceMax);
 
-const caseProps = computed((): Record<string, unknown> => ({
+const caseProps = computed((): Record<string, unknown> => selectedCase.value === 'player-profile' ? ({
   playerName: playerName.value,
   hudWidth: hudWidth.value,
   nameFontSize: nameFontSize.value,
@@ -47,7 +47,7 @@ const caseProps = computed((): Record<string, unknown> => ({
   'onUpdate:experience': (value: number) => {
     experience.value = Math.round(value);
   },
-}));
+}) : {});
 
 function setExperiencePreset(ratio: number): void {
   experience.value = Math.round(ratio * props.experienceMax);
@@ -68,11 +68,11 @@ function setExperiencePreset(ratio: number): void {
       >{{ entry.label }}</cue-button>
     </div>
 
-    <div class="case-box">
+    <div :class="['case-box', { 'hotbar-case-box': selectedCase === 'item-hotbar' }]">
       <component v-if="currentCase" :is="currentCase.component" v-bind="caseProps" />
     </div>
 
-    <div class="panel">
+    <div v-if="selectedCase === 'player-profile'" class="panel">
       <div class="panel-title">PROFILE STATE</div>
       <div class="panel-value">{{ playerName }}</div>
       <div class="choice-row">
@@ -214,6 +214,8 @@ function setExperiencePreset(ratio: number): void {
   width: 290px;
   padding: 10px;
 }
+
+.hotbar-case-box { width: 1100px; }
 
 .panel-title {
   color: #b7ff00;

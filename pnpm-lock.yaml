@@ -14,9 +14,12 @@ importers:
         specifier: link:../../cc-extension-cue/packages/runtime
         version: link:../../cc-extension-cue/packages/runtime
     devDependencies:
-      '@bsgames/cue-cli':
-        specifier: link:../../cc-extension-cue/packages/cli
-        version: link:../../cc-extension-cue/packages/cli
+      '@bsgames/oms-plugin-cue':
+        specifier: link:../../cc-extension-cue/packages/oms-plugin-cue
+        version: link:../../cc-extension-cue/packages/oms-plugin-cue
+      '@oms/plugin':
+        specifier: link:U:/Repos/codex-worktrees/d3b7/cc-extension-oh-my-script/packages/plugin
+        version: link:../../../../codex-worktrees/d3b7/cc-extension-oh-my-script/packages/plugin
 
   game-ui-showcase:
     dependencies:
@@ -24,6 +27,9 @@ importers:
         specifier: link:../../cc-extension-cue/packages/runtime
         version: link:../../cc-extension-cue/packages/runtime
     devDependencies:
-      '@bsgames/cue-cli':
-        specifier: link:../../cc-extension-cue/packages/cli
-        version: link:../../cc-extension-cue/packages/cli
+      '@bsgames/oms-plugin-cue':
+        specifier: link:../../cc-extension-cue/packages/oms-plugin-cue
+        version: link:../../cc-extension-cue/packages/oms-plugin-cue
+      '@oms/plugin':
+        specifier: link:U:/Repos/codex-worktrees/d3b7/cc-extension-oh-my-script/packages/plugin
+        version: link:../../../../codex-worktrees/d3b7/cc-extension-oh-my-script/packages/plugin

@@ -7,12 +7,13 @@ font assets.
 ## Run
 
 1. Build the sibling Cue repository with `node --run build`.
-2. Run `pnpm install` and `node --run build` in this examples workspace.
-3. Install the Cue and oh-my-script extensions in this project using exm, as in the basic project.
+2. Run `pnpm install` in this examples workspace.
+3. Install the Cue and plugin-enabled oh-my-script extensions using exm, as in the basic project; run `node --run build` to verify OMS development and production script builds.
 4. Open this project in Vortex, open `assets/main.scene`, and start Preview.
 
-The source `.cue` files compile through cue-cli into the ignored `src/generated/cue` directory.
-The project uses the same OMS module-loading path as the basic galleries.
+The source `.cue` files are imported directly through `@bsgames/oms-plugin-cue`, including nested
+case components and their relative TypeScript imports. No pre-generated JavaScript is required.
+`node --run test` runs the renderer smoke test through the OMS headless output, plus the item-state tests.
 
 Each case lives in its own directory under `src/cases/`, even when it contains only one source file.
 
@@ -60,9 +61,57 @@ ends a drag and the next drag still works. Screenshots default to the ignored
 `game-ui-showcase/temp/input-preview/` directory; an optional third argument changes the output directory.
 No project browser dependency is required and the script does not launch Vortex.
 
-`src/showcase-state.ts` owns the case registry. Each registry entry produces a tab in
-[src/app.cue](src/app.cue), which owns the case selection and the profile state every control binds
-to. Only Player profile is registered initially; add complete cases there as they become available.
+## Item hotbar
+
+The second tab reproduces the source game's four-slot item bar using its original SpriteFrames.
+The [case](src/cases/item-hotbar/item-hotbar.cue), [slot component](src/cases/item-hotbar/item-slot.cue)
+and [reactive match state](src/cases/item-hotbar/item-hotbar-state.ts) live together under `src/cases/item-hotbar/`.
+No source-game runtime, combat simulation or server is required.
+
+- Click an occupied slot or press **1–4** to select it; selecting does not consume it.
+- **Use** consumes the selected item. All items share a 0.2-second use interval; it does not draw
+  an extra shared cooldown sweep. Independent cooldowns continue when another slot is selected.
+- Rocket holds three charges and restores one every 1.5 seconds, in sequence. Consuming another
+  charge does not restart the pending recharge. The recharge sweep is lighter while charges remain;
+  at zero charges it becomes darker and displays a rounded-up countdown.
+- Mine starts with five uses and a 0.5-second cooldown. Laser has infinite stock, no quantity badge
+  and a 3-second cooldown. Rapidfire starts with two uses and a 1-second cooldown.
+- Exhausting finite stock clears its slot and selects the first occupied slot. Pickup adds to an
+  existing finite stack or fills the first empty slot. Parachute pickup provides a fifth item with
+  a 1-second cooldown; a new item cannot enter a full bar. Reacquiring an item retains its cooldown.
+- Pause, change clock speed, advance by 0.2/0.5/1.5 seconds, reset equipment, or hide/show the HUD.
+  Hiding only removes the view: match state keeps running. Switching away from this case unmounts
+  its clock; returning creates a fresh match.
+
+The radial mask is made of clipped, rotated Cue elements, not a Cocos Sprite fill or a custom shader.
+It covers the square interior clockwise from twelve o'clock, leaves the slot frame unchanged, and
+keeps the countdown and count above the mask. The slots are 120 × 120 px with a 42 px gap and
+4 px image insets. Each icon uses `object-fit: contain` to fit its 112 × 112 px content box,
+centered with its aspect ratio preserved, including upscaling small icons. SpriteFrame dimensions
+come from the loaded asset; the case does not duplicate image dimensions or calculate image scales.
+
+Behavior follows the source project's `match-item-slot.component.ts`,
+`raid-player-character-bag-authority-component.ts`,
+`raid-player-character-item-use-authority-component.ts`, and item design table.
+This standalone case models their item-bar state transitions; it does not attempt to fire actual weapons.
+
+From the repository root, with the Showcase Preview already running:
+
+```powershell
+. 'U:\codex-prelude.ps1'
+$env:PLAYWRIGHT_BROWSERS_PATH = 'U:\AgentTools\playwright\browsers'
+node scripts/verify-hotbar-preview.ts 'http://127.0.0.1:7458/' 'U:\AgentTools\playwright\node_modules\playwright'
+```
+
+This regression uses an 1800 × 1000 browser and real mouse/keyboard input. It checks charge depletion
+and recovery, cooldown independence, counts, pickup, keyboard focus, hidden-HUD time progression,
+tab remount and actual pixels of a half-cooldown. Screenshots go to the same ignored
+`temp/input-preview/` directory; an optional third argument changes the output directory.
+`node --run test` also exercises the state transitions and the compiled case through Cue's renderer.
+
+`src/showcase-state.ts` owns the two-case registry. Each entry produces a tab in
+[src/app.cue](src/app.cue). Profile state belongs to the app; the hotbar owns its match state and
+controls, so neither case mixes the other one's controls into its page.
 
 ## Source assets
 
@@ -71,6 +120,8 @@ to. Only Player profile is registered initially; add complete cases there as the
   The HUD prefab's original fallback-avatar UUID is absent from the available source asset metadata.
 - `assets/fonts/smiley-sans-oblique.ttf`: original source TTF used for the level digits.
 - `assets/fonts/maoken-zhuyuan-ti.ttf`: original source TTF used for experience digits.
+- `assets/item-hotbar/`: original Rocket, Mine, Laser, Rapidfire and Parachute icons plus the normal
+  and selected slot frames, retaining their SpriteFrame UUIDs and trim metadata.
 
 These files were copied from the user-provided RoboTimes project. The source TTFs are loaded through
 `loadCueFont` before mount, their raw family names are assigned as `element.style.fontFamily` arrays,

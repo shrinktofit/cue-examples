@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { calculateFittedOrthoHeight } from '../src/calculate-fitted-ortho-height.ts';
-import flexPlayground from '../src/generated/cue/flex-playground.cue.js';
-import imagePlayground from '../src/generated/cue/image-playground.cue.js';
-import inputPlayground from '../src/generated/cue/input-playground.cue.js';
-import styleApiPlayground from '../src/generated/cue/style-api-playground.cue.js';
-import positionPlayground from '../src/generated/cue/position-playground.cue.js';
-import textPlayground from '../src/generated/cue/text-playground.cue.js';
+import flexPlayground from '../src/flex-playground.cue';
+import imagePlayground from '../src/image-playground.cue';
+import inputPlayground from '../src/input-playground.cue';
+import styleApiPlayground from '../src/style-api-playground.cue';
+import positionPlayground from '../src/position-playground.cue';
+import textPlayground from '../src/text-playground.cue';
 import {
   CueElement,
   CueEvent,
@@ -168,6 +168,15 @@ assert.equal(root.children[0], imageElement);
 const uuidImage = imageStage.children[0];
 assert.ok(uuidImage instanceof CueImageElement);
 assert.notEqual(uuidImage, relativeImage);
+
+/// @case The UUID source changes from a square icon to wide and small icons while the box size changes.
+/// @expect The same cue-image stays mounted; resource dimensions are not maintained by the gallery.
+for (const source of ['wide', 'small']) {
+  imageSource.value = source;
+  imageSize.value = 'size-large';
+  await nextTick();
+  assert.equal(imageStage.children[0], uuidImage);
+}
 
 app.unmount();
 assert.equal(root.children.length, 0);
