@@ -1,4 +1,4 @@
-import showcaseApp from './app.cue';
+import showcaseApp from './app.cc.vue';
 import { showcaseCases, type ShowcaseFonts } from './showcase-state.ts';
 import {
   Camera,

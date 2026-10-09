@@ -16,7 +16,7 @@ import {
   nextTick,
   type CueNode,
 } from '@bsgames/cue';
-import showcaseApp from '../src/app.cue';
+import showcaseApp from '../src/app.cc.vue';
 import { showcaseCases } from '../src/showcase-state.ts';
 
 function textContent(node: CueNode): string {

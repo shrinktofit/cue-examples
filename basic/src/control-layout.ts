@@ -63,7 +63,7 @@ export const PANEL_BOX: CueRect = {
 export const CONTROL_ROW = { height: 21, gap: 4 } as const;
 
 /**
- * Panel internals mirrored from the panel CSS in `app.cue`. The preview
+ * Panel internals mirrored from the panel CSS in `app.cc.vue`. The preview
  * regressions click real controls, and Cue exposes no element rectangle, so the
  * click targets are derived from these numbers instead of private layout state.
  * Keep them in step with the `.panel` rules.

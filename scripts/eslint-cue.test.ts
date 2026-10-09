@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ESLint } from 'eslint';
 
-const filePath = 'basic/src/flex-playground.cue';
+const filePath = 'basic/src/flex-playground.cc.vue';
 
 await test('Cue scripts use TypeScript rules and report original source locations', async () => {
   const eslint = new ESLint();

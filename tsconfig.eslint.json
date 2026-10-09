@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "types": [
       "node",
-      "@cocos/creator-types/engine"
+      "@cocos/creator-types/engine",
     ],
     "allowImportingTsExtensions": true
   },
@@ -18,10 +18,10 @@
     "scripts/**/*.ts",
     "basic/**/*.ts",
     "basic/**/*.js",
-    "basic/**/*.cue",
+    "basic/**/*.cc.vue",
     "game-ui-showcase/**/*.ts",
     "game-ui-showcase/**/*.js",
-    "game-ui-showcase/**/*.cue"
+    "game-ui-showcase/**/*.cc.vue",
   ],
   "exclude": [
     "**/node_modules",
@@ -31,6 +31,6 @@
     "**/build",
     "**/native",
     "**/extensions",
-    "**/assets/oms.ts"
+    "**/assets/oms.ts",
   ]
 }

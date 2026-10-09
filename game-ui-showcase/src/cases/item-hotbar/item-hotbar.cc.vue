@@ -8,7 +8,7 @@ import {
   type CueKeyboardEvent,
   type CueRootElement,
 } from '@bsgames/cue';
-import ItemSlot from './item-slot.cue';
+import ItemSlot from './item-slot.cc.vue';
 import { createItemHotbar, ItemId } from './item-hotbar-state.ts';
 
 const props = defineProps<{ documentRoot: CueRootElement }>();

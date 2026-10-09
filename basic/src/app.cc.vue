@@ -8,6 +8,8 @@ import {
   type Component,
 } from '@bsgames/cue';
 
+defineOptions({ name: 'BasicApp' });
+
 interface PanelOption {
   label: string;
   value: string;

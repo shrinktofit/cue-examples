@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { calculateFittedOrthoHeight } from '../src/calculate-fitted-ortho-height.ts';
-import flexPlayground from '../src/flex-playground.cue';
-import imagePlayground from '../src/image-playground.cue';
-import inputPlayground from '../src/input-playground.cue';
-import styleApiPlayground from '../src/style-api-playground.cue';
-import positionPlayground from '../src/position-playground.cue';
-import textPlayground from '../src/text-playground.cue';
+import flexPlayground from '../src/flex-playground.cc.vue';
+import imagePlayground from '../src/image-playground.cc.vue';
+import inputPlayground from '../src/input-playground.cc.vue';
+import styleApiPlayground from '../src/style-api-playground.cc.vue';
+import positionPlayground from '../src/position-playground.cc.vue';
+import textPlayground from '../src/text-playground.cc.vue';
 import {
   CueElement,
   CueEvent,

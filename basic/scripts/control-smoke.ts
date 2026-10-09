@@ -19,12 +19,12 @@ import {
   Text,
   type CueNode,
 } from '@bsgames/cue';
-import buttonPlayground from '../src/button/button-playground.cue';
-import togglePlayground from '../src/toggle/toggle-playground.cue';
-import sliderPlayground from '../src/slider/slider-playground.cue';
-import selectPlayground from '../src/select/select-playground.cue';
-import textInputPlayground from '../src/text-input/text-input-playground.cue';
-import numberInputPlayground from '../src/number-input/number-input-playground.cue';
+import buttonPlayground from '../src/button/button-playground.cc.vue';
+import togglePlayground from '../src/toggle/toggle-playground.cc.vue';
+import sliderPlayground from '../src/slider/slider-playground.cc.vue';
+import selectPlayground from '../src/select/select-playground.cc.vue';
+import textInputPlayground from '../src/text-input/text-input-playground.cc.vue';
+import numberInputPlayground from '../src/number-input/number-input-playground.cc.vue';
 
 function elements(node: CueNode): CueElement[] {
   return node instanceof CueElement ? [node, ...node.children.flatMap(elements)] : [];

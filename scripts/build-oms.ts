@@ -17,18 +17,18 @@ async function assertDirectCueInputs(): Promise<void> {
   assert.equal(
     existsSync(join(project, 'src/generated')),
     false,
-    'Remove the obsolete src/generated directory: OMS must compile .cue directly.',
+    'Remove the obsolete src/generated directory: OMS must compile .cc.vue directly.',
   );
   const files = await readdir(join(project, 'src'), { recursive: true });
-  assert.ok(files.some((file) => file.endsWith('.cue')));
-  for (const file of files.filter((file) => /\.(?:ts|cue|js)$/u.test(file))) {
+  assert.ok(files.some((file) => file.endsWith('.cc.vue')));
+  for (const file of files.filter((file) => /\.(?:ts|vue|js)$/u.test(file))) {
     assert.ok(
-      !/\.cue\.(?:script\.|template\.|style\.)?js$/u.test(file),
+      !/\.cc\.vue\.(?:script\.|template\.|style\.)?js$/u.test(file),
       `Unexpected intermediate source ${file}`,
     );
     assert.doesNotMatch(
       await readFile(join(project, 'src', file), 'utf8'),
-      /generated\/cue|\.cue\.js/u,
+      /generated\/cue|\.cc\.vue\.js/u,
       file,
     );
   }
