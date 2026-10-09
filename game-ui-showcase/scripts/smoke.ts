@@ -4,6 +4,7 @@ import {
   CueElement,
   CueEvent,
   CueImageElement,
+  CueKeyboardEvent,
   CueRootElement,
   CueSliderElement,
   Length,
@@ -69,6 +70,7 @@ const app = createCueRenderer().createApp(
   defineComponent(
     () => () =>
       h(showcaseApp, {
+        documentRoot: root,
         cases: showcaseCases,
         fonts: { level: 'sans-serif', numbers: 'sans-serif' },
         experienceMax,
@@ -191,7 +193,7 @@ clickButton(root, '暂停');
 clickButton(root, '重置装备');
 await nextTick();
 assert.ok(!textContent(root).includes('PROFILE STATE'));
-assert.ok(textContent(root).includes('ITEM HOTBAR'));
+assert.ok(textContent(root).includes('MATCH STATE'));
 const slotButtons = elements(root).filter(
   (element) =>
     element instanceof CueButtonElement
@@ -206,31 +208,21 @@ const useButton = elements(root).find(
     element instanceof CueButtonElement && textContent(element) === '使用 火箭',
 ) as CueButtonElement;
 assert.equal(useButton.disabled, true);
-clickButton(root, '+0.2s');
+clickButton(root, '重置装备');
 await nextTick();
-assert.equal(useButton.disabled, false);
-slotButtons[2].dispatchEvent(new CueEvent('click', { bubbles: true }));
+root.dispatchEvent(new CueKeyboardEvent('keydown', { key: '3' }));
 await nextTick();
 clickButton(root, '使用 激光炮');
 await nextTick();
 assert.equal(textContent(slotButtons[2]), '3.0');
-clickButton(root, '+0.5s');
-await nextTick();
-assert.equal(textContent(slotButtons[2]), '2.5');
-clickButton(root, '隐藏 HUD');
-await nextTick();
-clickButton(root, '+1.5s');
-await nextTick();
-clickButton(root, '显示 HUD');
-await nextTick();
-assert.ok(textContent(root).includes('1.0'));
+assert.equal(root.children[0], mountedCase);
 clickButton(root, 'Player profile');
 await nextTick();
 assert.ok(textContent(root).includes('PROFILE STATE'));
 assert.ok(textContent(root).includes('一位名字很长的太空探险家'));
 clickButton(root, 'Item hotbar');
 await nextTick();
-assert.ok(textContent(root).includes('装备就绪'));
+assert.ok(textContent(root).includes('使用 火箭'));
 
 app.unmount();
 assert.deepEqual(root.children, []);

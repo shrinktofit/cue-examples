@@ -53,7 +53,9 @@ async function mountShowcase(scene: Scene): Promise<void> {
   cueNode.setPosition(documentOrigin.x, documentOrigin.y, 0);
   cueNode.addComponent(UITransform).setContentSize(safeArea.width, safeArea.height);
   scene.addChild(cueNode);
-  cueNode.addComponent(CueDocument).mount(showcaseApp, {
+  const document = cueNode.addComponent(CueDocument);
+  document.mount(showcaseApp, {
+    documentRoot: document.rootElement,
     cases: showcaseCases,
     fonts: fontFamilies,
     experienceMax,

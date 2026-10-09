@@ -1,0 +1,17 @@
+{
+  "include": ["."],
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true,
+  },
+  "vueCompilerOptions": {
+    "lib": "@bsgames/cue",
+    "extensions": [
+      ".vue",
+      ".cue",
+    ],
+  }
+}
