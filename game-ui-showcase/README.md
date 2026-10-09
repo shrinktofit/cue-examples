@@ -69,6 +69,8 @@ and [reactive match state](src/cases/item-hotbar/item-hotbar-state.ts) live toge
 No source-game runtime, combat simulation or server is required.
 
 - Click an occupied slot or press **1–4** to select it; selecting does not consume it.
+  Shortcuts remain available after clicking blank areas in the Cue document, but do not intercept
+  typing in an external text editor. The case listens on the document root only while mounted.
 - **Use** consumes the selected item. All items share a 0.2-second use interval; it does not draw
   an extra shared cooldown sweep. Independent cooldowns continue when another slot is selected.
 - Rocket holds three charges and restores one every 1.5 seconds, in sequence. Consuming another
@@ -79,16 +81,20 @@ No source-game runtime, combat simulation or server is required.
 - Exhausting finite stock clears its slot and selects the first occupied slot. Pickup adds to an
   existing finite stack or fills the first empty slot. Parachute pickup provides a fifth item with
   a 1-second cooldown; a new item cannot enter a full bar. Reacquiring an item retains its cooldown.
-- Pause, change clock speed, advance by 0.2/0.5/1.5 seconds, reset equipment, or hide/show the HUD.
-  Hiding only removes the view: match state keeps running. Switching away from this case unmounts
-  its clock; returning creates a fresh match.
+- Pause or reset equipment. Switching away from this case unmounts its clock
+  and keyboard listener; returning creates a fresh match.
 
 The radial mask is made of clipped, rotated Cue elements, not a Cocos Sprite fill or a custom shader.
 It covers the square interior clockwise from twelve o'clock, leaves the slot frame unchanged, and
-keeps the countdown and count above the mask. The slots are 120 × 120 px with a 42 px gap and
-4 px image insets. Each icon uses `object-fit: contain` to fit its 112 × 112 px content box,
+keeps the countdown and count above the mask. The slots default to 120 × 120 px with a 42 px gap.
+The frame, rounded content clip and cooldown layers follow the slot root's width and height using
+percentages and insets; the artwork's 8/120 inset ratio produces a 104 × 104 px content box at the
+default size. The icon fills that box in normal flow with `object-fit: contain`,
 centered with its aspect ratio preserved, including upscaling small icons. SpriteFrame dimensions
 come from the loaded asset; the case does not duplicate image dimensions or calculate image scales.
+The countdown is a centered flex item; the stock count stays anchored to the lower-right corner.
+Text sizes remain fixed for readability rather than scaling with the artwork. Decorative children
+inherit `pointer-events: none` so the slot button remains the hit target.
 
 Behavior follows the source project's `match-item-slot.component.ts`,
 `raid-player-character-bag-authority-component.ts`,
@@ -101,11 +107,14 @@ From the repository root, with the Showcase Preview already running:
 . 'U:\codex-prelude.ps1'
 $env:PLAYWRIGHT_BROWSERS_PATH = 'U:\AgentTools\playwright\browsers'
 node scripts/verify-hotbar-preview.ts 'http://127.0.0.1:7458/' 'U:\AgentTools\playwright\node_modules\playwright'
+node scripts/verify-hotbar-regressions.ts 'http://127.0.0.1:7458/' 'U:\AgentTools\playwright\node_modules\playwright'
 ```
 
 This regression uses an 1800 × 1000 browser and real mouse/keyboard input. It checks charge depletion
-and recovery, cooldown independence, counts, pickup, keyboard focus, hidden-HUD time progression,
-tab remount and actual pixels of a half-cooldown. Screenshots go to the same ignored
+and recovery, cooldown independence, counts, pickup, keyboard focus, tab remount and actual pixels
+of a half-cooldown. It also resizes a retained slot to 80, 120 and 160 px and verifies image bounds,
+selection and half-cooldown pixels. It controls browser time to advance the real match timer. The second script checks
+shortcuts after blank clicks, external editor isolation and icon/frame pixels. Screenshots go to the same ignored
 `temp/input-preview/` directory; an optional third argument changes the output directory.
 `node --run test` also exercises the state transitions and the compiled case through Cue's renderer.
 

@@ -11,10 +11,8 @@ import {
 } from '#showcase/cases/item-hotbar/item-hotbar-state.ts';
 
 const props = defineProps<{
-  index: number;
   item?: { id: ItemId };
   selected: boolean;
-  name: string;
   count?: number;
   fraction: number;
   soft: boolean;
@@ -41,23 +39,21 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div
-    class="hotbar-slot-column"
+  <cue-button
+    ref="button"
+    class="hotbar-slot"
+    :disabled="!item"
+    @click="emit('select')"
   >
-    <cue-button
-      ref="button"
-      class="hotbar-slot"
-      :disabled="!item"
-      @click="emit('select')"
-    >
-      <cue-image
-        class="hotbar-slot-frame"
-        :src="
-          selected
-            ? 'uuid:5be36d0f-bc2b-4eff-8786-b0872e9ba341@f9941'
-            : 'uuid:893632fc-0f5c-45f9-b6f6-516428a886c3@f9941'
-        "
-      />
+    <cue-image
+      class="hotbar-slot-frame"
+      :src="
+        selected
+          ? 'uuid:5be36d0f-bc2b-4eff-8786-b0872e9ba341@f9941'
+          : 'uuid:893632fc-0f5c-45f9-b6f6-516428a886c3@f9941'
+      "
+    />
+    <div class="hotbar-slot-content">
       <cue-image
         v-if="item"
         class="hotbar-slot-icon"
@@ -76,28 +72,19 @@ watchEffect(() => {
           class="hotbar-rotor hotbar-rotor-left"
         ><div class="hotbar-plane hotbar-plane-right" /></div></div>
       </div>
-      <div
-        v-if="countdown"
-        class="hotbar-countdown"
-      >{{ countdown }}</div>
-      <div
-        v-if="count !== undefined"
-        class="hotbar-count"
-      >{{ count }}</div>
-    </cue-button>
+    </div>
     <div
-      :class="['hotbar-slot-name', { 'hotbar-slot-name-selected': selected }]"
-    >{{ index + 1 }} · {{ name }}</div>
-  </div>
+      v-if="countdown"
+      class="hotbar-countdown"
+    >{{ countdown }}</div>
+    <div
+      v-if="count !== undefined"
+      class="hotbar-count"
+    >{{ count }}</div>
+  </cue-button>
 </template>
 
 <style>
-.hotbar-slot-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
 .hotbar-slot {
   position: relative;
   width: 120px;
@@ -108,42 +95,42 @@ watchEffect(() => {
   border: 0;
   background-color: transparent;
 }
+.hotbar-slot > * {
+  pointer-events: none;
+}
 .hotbar-slot-frame {
   position: absolute;
   left: 0;
   top: 0;
-  width: 120px;
-  height: 120px;
-  pointer-events: none;
+  width: 100%;
+  height: 100%;
+}
+.hotbar-slot-content {
+  position: absolute;
+  /* Match the frame artwork's 8/120 inset at any slot size. */
+  inset: 6.666667%;
+  border-radius: 6%;
+  overflow: hidden;
 }
 .hotbar-slot-icon {
-  position: absolute;
-  left: 4px;
-  top: 4px;
-  width: 112px;
-  height: 112px;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  pointer-events: none;
 }
 .hotbar-cooldown {
   position: absolute;
-  left: 4px;
-  top: 4px;
-  width: 112px;
-  height: 112px;
-  border-radius: 7px;
-  overflow: hidden;
-  pointer-events: none;
+  inset: 0;
 }
 .hotbar-half {
   position: absolute;
   top: 0;
-  width: 56px;
-  height: 112px;
+  bottom: 0;
+  width: 50%;
   overflow: hidden;
 }
 .hotbar-half-right {
-  left: 56px;
+  left: 50%;
 }
 .hotbar-half-left {
   left: 0;
@@ -151,62 +138,50 @@ watchEffect(() => {
 .hotbar-rotor {
   position: absolute;
   top: 0;
-  width: 112px;
-  height: 112px;
+  width: 200%;
+  height: 100%;
   transform-origin: 50% 50%;
 }
 .hotbar-rotor-right {
-  left: -56px;
+  left: -100%;
 }
 .hotbar-rotor-left {
   left: 0;
 }
 .hotbar-plane {
   position: absolute;
-  top: -168px;
-  width: 224px;
-  height: 448px;
+  top: -150%;
+  width: 200%;
+  height: 400%;
   background-color: rgba(0, 0, 0, 0.627451);
 }
 .hotbar-plane-left {
-  left: -168px;
+  left: -150%;
 }
 .hotbar-plane-right {
-  left: 56px;
+  left: 50%;
 }
 .hotbar-recharging .hotbar-plane {
   background-color: rgba(0, 0, 0, 0.372549);
 }
 .hotbar-countdown {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 35px;
+  /* Remain a centered flex item while painting above the positioned artwork. */
+  position: relative;
   text-align: center;
   font-size: 38px;
   line-height: 46px;
   font-weight: bold;
   color: white;
   -cue-text-stroke: 3px black;
-  pointer-events: none;
 }
 .hotbar-count {
   position: absolute;
-  right: 6px;
-  bottom: 3px;
+  right: 5%;
+  bottom: 2.5%;
   font-size: 25px;
   line-height: 30px;
   font-weight: bold;
   color: white;
   -cue-text-stroke: 2px black;
-  pointer-events: none;
-}
-.hotbar-slot-name {
-  font-size: 14px;
-  line-height: 18px;
-  color: #94a3b8;
-}
-.hotbar-slot-name-selected {
-  color: #b7ff00;
 }
 </style>

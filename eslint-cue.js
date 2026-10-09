@@ -21,7 +21,7 @@ export const cueScriptParser = {
     // TypeScript must check the actual .cue file in tsconfig.eslint.json.
     return ts.parser.parseForESLint(source, {
       ...options,
-      filePath: options?.filePath?.replace(/\.cue\/\d+_component\.vue$/u, '.cue'),
+      filePath: options?.filePath?.replace(/\.cue[\\/]\d+_component\.vue$/u, '.cue'),
     });
   },
 };

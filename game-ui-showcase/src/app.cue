@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, type Component } from '@bsgames/cue';
+import { computed, ref, type Component, type CueRootElement } from '@bsgames/cue';
 
 interface ShowcaseCase {
   id: string;
@@ -9,6 +9,7 @@ interface ShowcaseCase {
 }
 
 const props = defineProps<{
+  documentRoot: CueRootElement;
   cases: ShowcaseCase[];
   fonts: { level: string; numbers: string };
   experienceMax: number;
@@ -69,7 +70,7 @@ const caseProps = computed(
           experience.value = Math.round(value);
         },
       }
-      : {},
+      : { documentRoot: props.documentRoot },
 );
 
 function setExperiencePreset(ratio: number): void {

@@ -15,7 +15,7 @@ Case tabs and state controls are also built with Cue. The images below are captu
 | Preview | Description |
 | --- | --- |
 | ![Player profile HUD](docs/showcase/player-profile-hud.png) | **[Player profile](game-ui-showcase/src/cases/player-profile/player-profile.cue)** — A reactive lobby HUD with an avatar, nickname, level badge, and live experience bar. Change the nickname, font size, or width to see Flex reflow and text wrapping; level and experience update in place. |
-| ![Item hotbar](docs/showcase/item-hotbar.png) | **[Item hotbar](game-ui-showcase/src/cases/item-hotbar/item-hotbar.cue)** — Four reactive item slots with selection, radial cooldowns, serial charges and stack counts. Use, exhaust and pick up items; pause or advance the match clock to inspect every transition. |
+| ![Item hotbar](docs/showcase/item-hotbar.png) | **[Item hotbar](game-ui-showcase/src/cases/item-hotbar/item-hotbar.cue)** — Four reactive item slots with selection, radial cooldowns, serial charges and stack counts. Use, exhaust and pick up items; pause to inspect transitions. |
 
 ## Local setup
 
@@ -52,7 +52,8 @@ Saved browser regressions exercise the running projects through actual mouse/tou
 [`scripts/verify-input-preview.ts`](scripts/verify-input-preview.ts) checks the basic gallery, and
 [`scripts/verify-hud-input-preview.ts`](scripts/verify-hud-input-preview.ts) checks the HUD, and
 [`scripts/verify-hotbar-preview.ts`](scripts/verify-hotbar-preview.ts) checks the item hotbar through mouse,
-keyboard and rendered cooldown pixels.
+keyboard and rendered cooldown pixels. [`scripts/verify-hotbar-regressions.ts`](scripts/verify-hotbar-regressions.ts)
+checks shortcuts after blank clicks, foreign text editor isolation and icon/frame separation.
 Each requires a Preview URL and an explicit existing Playwright installation path. Commands and
 screenshot output are documented in the respective project READMEs. The development dependency
 on `playwright-core` supplies types; the scripts still load the explicit installation and do not
