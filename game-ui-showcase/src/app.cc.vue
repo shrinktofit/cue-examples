@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, type Component, type CueRootElement } from '@bsgames/cue';
 
+defineOptions({ name: 'ShowcaseApp' });
+
 interface ShowcaseCase {
   id: string;
   label: string;

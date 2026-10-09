@@ -1,4 +1,4 @@
-declare module '*.cue' {
+declare module '*.cc.vue' {
   const component: import('@bsgames/cue').Component;
   export default component;
 }

@@ -1,5 +1,5 @@
-import playerProfile from './cases/player-profile/player-profile.cue';
-import itemHotbar from './cases/item-hotbar/item-hotbar.cue';
+import playerProfile from './cases/player-profile/player-profile.cc.vue';
+import itemHotbar from './cases/item-hotbar/item-hotbar.cc.vue';
 
 export interface ShowcaseFonts {
   level: string;

@@ -11,7 +11,7 @@ font assets.
 3. Install the Cue and plugin-enabled oh-my-script extensions using exm, as in the basic project; run `node --run build` to verify OMS development and production script builds.
 4. Open this project in Vortex, open `assets/main.scene`, and start Preview.
 
-The source `.cue` files are imported directly through `@bsgames/oms-plugin-cue`, including nested
+The source `.cc.vue` files are imported directly through `@bsgames/oms-plugin-cue`, including nested
 case components and their relative TypeScript imports. No pre-generated JavaScript is required.
 `node --run test` runs the renderer smoke test through the OMS headless output, plus the item-state tests.
 
@@ -20,7 +20,7 @@ Each case lives in its own directory under `src/cases/`, even when it contains o
 ## Player profile
 
 The first case reproduces a lobby player HUD: avatar, name, experience bar and level badge.
-Its source is [player-profile.cue](src/cases/player-profile/player-profile.cue).
+Its source is [player-profile.cc.vue](src/cases/player-profile/player-profile.cc.vue).
 Select a short/long/Chinese nickname, choose a level, drag the experience slider, or use 0/50/100% presets.
 Inline choices also control the HUD width (360/480/620 px) and nickname font size (18/24/32 px).
 The Cue HUD is interactive: click the avatar to open or close profile details, and press or drag directly
@@ -64,7 +64,7 @@ No project browser dependency is required and the script does not launch Vortex.
 ## Item hotbar
 
 The second tab reproduces the source game's four-slot item bar using its original SpriteFrames.
-The [case](src/cases/item-hotbar/item-hotbar.cue), [slot component](src/cases/item-hotbar/item-slot.cue)
+The [case](src/cases/item-hotbar/item-hotbar.cc.vue), [slot component](src/cases/item-hotbar/item-slot.cc.vue)
 and [reactive match state](src/cases/item-hotbar/item-hotbar-state.ts) live together under `src/cases/item-hotbar/`.
 No source-game runtime, combat simulation or server is required.
 
@@ -119,7 +119,7 @@ shortcuts after blank clicks, external editor isolation and icon/frame pixels. S
 `node --run test` also exercises the state transitions and the compiled case through Cue's renderer.
 
 `src/showcase-state.ts` owns the two-case registry. Each entry produces a tab in
-[src/app.cue](src/app.cue). Profile state belongs to the app; the hotbar owns its match state and
+[src/app.cc.vue](src/app.cc.vue). Profile state belongs to the app; the hotbar owns its match state and
 controls, so neither case mixes the other one's controls into its page.
 
 ## Source assets

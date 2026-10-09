@@ -25,9 +25,9 @@ await writeFile(
 );
 await writeFile(
   join(project, 'src/index.ts'),
-  'import component from "./app.cue"; console.log(component);',
+  'import component from "./app.cc.vue"; console.log(component);',
 );
-await writeFile(join(project, 'src/app.cue'), source);
+await writeFile(join(project, 'src/app.cc.vue'), source);
 await writeFile(join(project, 'src/icon.png'), '');
 const metaPath = join(project, 'src/icon.png.meta');
 const metadata = (uuid: string) =>
@@ -49,7 +49,7 @@ const changed = async (edit: () => Promise<unknown>) => {
   return await timed(pending.promise);
 };
 try {
-  /// @case A .cue module is imported directly with an image metadata dependency.
+  /// @case A .cc.vue module is imported directly with an image metadata dependency.
   /// @expect Source and metadata updates rebuild; metadata deletion fails and recreation recovers.
   const initial = await timed(worker.ipc.invoke('rebuild', { profiles: ['default'] }));
   assert.equal(initial.default.ok, true, initial.default.error?.message);
@@ -57,10 +57,10 @@ try {
   const metaChanged = await changed(() => writeFile(metaPath, metadata('texture-after')));
   assert.equal(metaChanged.default.ok, true, metaChanged.default.error?.message);
   assert.match(await output(), /uuid:texture-after/u);
-  assert.equal(await readFile(join(project, 'src/app.cue'), 'utf8'), source);
+  assert.equal(await readFile(join(project, 'src/app.cc.vue'), 'utf8'), source);
   const sourceChanged = await changed(() =>
     writeFile(
-      join(project, 'src/app.cue'),
+      join(project, 'src/app.cc.vue'),
       source.replace('source-before', 'source-after'),
     ),
   );

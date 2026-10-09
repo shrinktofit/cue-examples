@@ -4,11 +4,10 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import stf from '@shrinktofit/eslint-config';
 import node from '@shrinktofit/eslint-config/node';
 import vue from '@shrinktofit/eslint-config/vue';
-import vueParser from 'vue-eslint-parser';
-import { cueProcessor, cueScriptParser } from './eslint-cue.js';
 
 export default defineConfig([
   globalIgnores([
+    '.validation/',
     '**/temp/',
     '**/library/',
     '**/local/',
@@ -20,25 +19,13 @@ export default defineConfig([
   ]),
   ...stf.configs.recommended,
   ...stf.configs.conventions,
-  {
-    files: ['**/*.cue'],
-    plugins: {
-      cue: {
-        processors: { sfc: cueProcessor },
-      },
-    },
-    processor: 'cue/sfc',
-  },
   ...node.configs.recommended.map((config) => ({
     ...config,
     files: ['eslint*.js', 'scripts/**/*.ts'],
   })),
-  ...vue.configs.recommended.map((config) => ({
-    ...config,
-    files: ['**/*.cue/*.vue'],
-  })),
+  ...vue.configs.recommended,
   {
-    files: ['**/*.cue/*.vue'],
+    files: ['**/*.cc.vue'],
     // Cue preserves template whitespace, so moving literal text changes rendered content.
     rules: {
       'vue/html-indent': [
@@ -50,10 +37,6 @@ export default defineConfig([
       'vue/multiline-html-element-content-newline': 'off',
     },
     languageOptions: {
-      parser: vueParser,
-      parserOptions: {
-        parser: { ts: cueScriptParser },
-      },
       globals: {
         console: 'readonly',
         setInterval: 'readonly',
@@ -67,7 +50,7 @@ export default defineConfig([
       parserOptions: {
         tsconfigRootDir: import.meta.dirname,
         project: './tsconfig.eslint.json',
-        extraFileExtensions: ['.cue'],
+        extraFileExtensions: ['.vue'],
       },
     },
     settings: {

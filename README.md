@@ -2,7 +2,7 @@
 
 This workspace contains real Vortex projects used to exercise Cue through its public packages.
 
-Both projects import `.cue` sources directly through `@bsgames/oms-plugin-cue` in
+Both projects import `.cc.vue` sources directly through `@bsgames/oms-plugin-cue` in
 `oms.config.js`. OMS owns development builds, dependency watching and production output.
 The compiler's facade/script/template/style modules stay in memory; no pre-generated JavaScript
 or CLI step is required. Development changes use OMS's existing whole reload, not fine-grained HMR.
@@ -14,8 +14,8 @@ Case tabs and state controls are also built with Cue. The images below are captu
 
 | Preview | Description |
 | --- | --- |
-| ![Player profile HUD](docs/showcase/player-profile-hud.png) | **[Player profile](game-ui-showcase/src/cases/player-profile/player-profile.cue)** — A reactive lobby HUD with an avatar, nickname, level badge, and live experience bar. Change the nickname, font size, or width to see Flex reflow and text wrapping; level and experience update in place. |
-| ![Item hotbar](docs/showcase/item-hotbar.png) | **[Item hotbar](game-ui-showcase/src/cases/item-hotbar/item-hotbar.cue)** — Four reactive item slots with selection, radial cooldowns, serial charges and stack counts. Use, exhaust and pick up items; pause to inspect transitions. |
+| ![Player profile HUD](docs/showcase/player-profile-hud.png) | **[Player profile](game-ui-showcase/src/cases/player-profile/player-profile.cc.vue)** — A reactive lobby HUD with an avatar, nickname, level badge, and live experience bar. Change the nickname, font size, or width to see Flex reflow and text wrapping; level and experience update in place. |
+| ![Item hotbar](docs/showcase/item-hotbar.png) | **[Item hotbar](game-ui-showcase/src/cases/item-hotbar/item-hotbar.cc.vue)** — Four reactive item slots with selection, radial cooldowns, serial charges and stack counts. Use, exhaust and pick up items; pause to inspect transitions. |
 
 ## Local setup
 
@@ -28,7 +28,7 @@ Case tabs and state controls are also built with Cue. The images below are captu
 
 `node --run test` builds the existing renderer smoke tests through OMS's headless profile and
 runs the resulting ESM bundle. Both build and test assert that `src/generated` does not exist,
-that source imports do not reference `.cue.js`, and that no CLI compilation step is configured.
+that source imports do not reference `.cc.vue.js`, and that no CLI compilation step is configured.
 Only OMS's final `temp/oms` and `build/oms-validation` outputs are written.
 `node scripts/verify-oms-watch.ts` checks real OMS source/metadata update, deletion and recovery
 with a disposable fixture. These are script-pipeline checks, not a complete Cocos application export.
@@ -69,11 +69,12 @@ pnpm test:lint
 pnpm exec tsc -p tsconfig.eslint.json
 ```
 
-The lint configuration covers TypeScript, JavaScript and `.cue` scripts and templates. It uses a
+The lint configuration covers TypeScript, JavaScript and `.cc.vue` scripts and templates. It uses a
 standalone TypeScript configuration so these checks do not require Creator's generated `temp`
 files. Generated project outputs and installed editor extensions are excluded.
 
-The Cue processor gives SFCs a virtual `.vue` filename for Vue's parser and rules, while resolving
-their scripts against the original `.cue` files for type-aware checks. Template text whitespace
-is preserved because Cue renders it literally; content-newline rules therefore do not apply to
-`.cue` templates. `test:lint` verifies script rules, typed promise checks and autofix source offsets.
+The standard Vue configuration from `@shrinktofit/eslint-config/vue` parses `.cc.vue` directly,
+including type-aware script checks, without a custom processor or filename adapter. Template text
+whitespace is preserved because Cue renders it literally; content-newline rules therefore do not
+apply to `.cc.vue` templates. `test:lint` verifies script rules, typed promise checks and autofix
+source offsets.

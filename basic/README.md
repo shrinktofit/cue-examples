@@ -1,6 +1,6 @@
 # Basic Cue galleries
 
-The playground `.cue` files in src/ are imported directly by src/index.ts through
+The playground `.cc.vue` files in src/ are imported directly by src/index.ts through
 `@bsgames/oms-plugin-cue`. One CueDocument renders both the gallery stage and the control plane.
 
 The compiler remains a library. The plugin supplies its generated modules in memory to OMS,
@@ -18,7 +18,7 @@ Open assets/main.scene and start Preview. The Cue control plane provides thirtee
 the same document as the gallery stage. The upper BASE row contains the seven foundation galleries; the
 lower CONTROLS row contains six built-in control galleries. Navigation and every control on the right are
 Cue elements: tabs and inline choices are `cue-button`s, menu controls are `cue-select`s, and the
-`src/app.cue` component owns page selection plus the per-control state that the mounted gallery receives
+`src/app.cc.vue` component owns page selection plus the per-control state that the mounted gallery receives
 as props.
 
 - Flex Playground contains only the A-J Flex items and controls for their container and selected item.
@@ -54,10 +54,10 @@ as props.
 
 ## Built-in control galleries
 
-Each control has its own directory and page: [Button](src/button/button-playground.cue),
-[Toggle](src/toggle/toggle-playground.cue), [Slider](src/slider/slider-playground.cue),
-[Select](src/select/select-playground.cue), [TextInput](src/text-input/text-input-playground.cue), and
-[NumberInput](src/number-input/number-input-playground.cue). These pages instantiate the actual
+Each control has its own directory and page: [Button](src/button/button-playground.cc.vue),
+[Toggle](src/toggle/toggle-playground.cc.vue), [Slider](src/slider/slider-playground.cc.vue),
+[Select](src/select/select-playground.cc.vue), [TextInput](src/text-input/text-input-playground.cc.vue), and
+[NumberInput](src/number-input/number-input-playground.cc.vue). These pages instantiate the actual
 `cue-button`, `cue-toggle`, `cue-slider`, `cue-select`, `cue-text-input`, and
 `cue-number-input` built-ins. They are not composed substitutes for runtime controls.
 
@@ -102,7 +102,7 @@ not claim to verify those platform interactions.
 
 `node --run test:control-plane` runs
 [scripts/control-plane-smoke.ts](scripts/control-plane-smoke.ts), which mounts the whole
-[src/app.cue](src/app.cue) document in Node: one Cue tree holding the stage and the control plane.
+[src/app.cc.vue](src/app.cc.vue) document in Node: one Cue tree holding the stage and the control plane.
 It checks that the thirteen tabs and their panel titles are Cue, that an inline choice and a
 `cue-select` commit both reach the mounted gallery props, that Apply does not remount while Remount
 replaces the instances, and that the native EditBox slot geometry and its visibility callback still

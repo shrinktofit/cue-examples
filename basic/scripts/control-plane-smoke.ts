@@ -13,20 +13,20 @@ import {
   Text,
   type CueNode,
 } from '@bsgames/cue';
-import basicApp from '../src/app.cue';
-import buttonPlayground from '../src/button/button-playground.cue';
-import decorationPlayground from '../src/decoration-playground.cue';
-import flexPlayground from '../src/flex-playground.cue';
-import imagePlayground from '../src/image-playground.cue';
-import inputPlayground from '../src/input-playground.cue';
-import numberInputPlayground from '../src/number-input/number-input-playground.cue';
-import positionPlayground from '../src/position-playground.cue';
-import selectPlayground from '../src/select/select-playground.cue';
-import sliderPlayground from '../src/slider/slider-playground.cue';
-import styleApiPlayground from '../src/style-api-playground.cue';
-import textInputPlayground from '../src/text-input/text-input-playground.cue';
-import textPlayground from '../src/text-playground.cue';
-import togglePlayground from '../src/toggle/toggle-playground.cue';
+import basicApp from '../src/app.cc.vue';
+import buttonPlayground from '../src/button/button-playground.cc.vue';
+import decorationPlayground from '../src/decoration-playground.cc.vue';
+import flexPlayground from '../src/flex-playground.cc.vue';
+import imagePlayground from '../src/image-playground.cc.vue';
+import inputPlayground from '../src/input-playground.cc.vue';
+import numberInputPlayground from '../src/number-input/number-input-playground.cc.vue';
+import positionPlayground from '../src/position-playground.cc.vue';
+import selectPlayground from '../src/select/select-playground.cc.vue';
+import sliderPlayground from '../src/slider/slider-playground.cc.vue';
+import styleApiPlayground from '../src/style-api-playground.cc.vue';
+import textInputPlayground from '../src/text-input/text-input-playground.cc.vue';
+import textPlayground from '../src/text-playground.cc.vue';
+import togglePlayground from '../src/toggle/toggle-playground.cc.vue';
 import { DEFAULT_PANEL_ID, PANELS } from '../src/control-plane-model.ts';
 import {
   NATIVE_AREA,

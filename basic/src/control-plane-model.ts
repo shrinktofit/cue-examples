@@ -3,7 +3,7 @@
  *
  * Pure data and types: no Cocos, Vue, or Cue imports, so the OMS-compiled scene
  * script and the Node smoke tests share one source of truth. The Cue panel
- * (`app.cue`) receives these tables as props and owns only the selected values.
+ * (`app.cc.vue`) receives these tables as props and owns only the selected values.
  */
 
 export type ControlScope
