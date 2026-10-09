@@ -31,37 +31,97 @@ function elements(node: CueNode): CueElement[] {
 }
 
 function textContent(node: CueNode): string {
-  return node instanceof Text ? node.data : node instanceof CueElement ? node.children.map(textContent).join('') : '';
+  return node instanceof Text
+    ? node.data
+    : node instanceof CueElement
+      ? node.children.map(textContent).join('')
+      : '';
 }
 
 const valueCases = [
-  { component: togglePlayground, elementType: CueToggleElement, tag: 'cue-toggle', mode: 'short', initial: false, external: true, input: false, empty: false, lazy: false },
-  { component: sliderPlayground, elementType: CueSliderElement, tag: 'cue-slider', mode: 'horizontal', initial: 25, external: 75, input: 40, empty: 0, lazy: false },
-  { component: selectPlayground, elementType: CueSelectElement, tag: 'cue-select', mode: 'all', initial: 'scout', external: 'navigator', input: 'engineer', empty: undefined, lazy: false },
-  { component: textInputPlayground, elementType: CueTextInputElement, tag: 'cue-text-input', mode: 'single', initial: 'Nova', external: '你好，旅行者', input: 'Edited', empty: '', lazy: true },
-  { component: numberInputPlayground, elementType: CueNumberInputElement, tag: 'cue-number-input', mode: 'editable', initial: 2.5, external: 8.5, input: 4.5, empty: undefined, lazy: true },
+  {
+    component: togglePlayground,
+    elementType: CueToggleElement,
+    tag: 'cue-toggle',
+    mode: 'short',
+    initial: false,
+    external: true,
+    input: false,
+    empty: false,
+    lazy: false,
+  },
+  {
+    component: sliderPlayground,
+    elementType: CueSliderElement,
+    tag: 'cue-slider',
+    mode: 'horizontal',
+    initial: 25,
+    external: 75,
+    input: 40,
+    empty: 0,
+    lazy: false,
+  },
+  {
+    component: selectPlayground,
+    elementType: CueSelectElement,
+    tag: 'cue-select',
+    mode: 'all',
+    initial: 'scout',
+    external: 'navigator',
+    input: 'engineer',
+    empty: undefined,
+    lazy: false,
+  },
+  {
+    component: textInputPlayground,
+    elementType: CueTextInputElement,
+    tag: 'cue-text-input',
+    mode: 'single',
+    initial: 'Nova',
+    external: '你好，旅行者',
+    input: 'Edited',
+    empty: '',
+    lazy: true,
+  },
+  {
+    component: numberInputPlayground,
+    elementType: CueNumberInputElement,
+    tag: 'cue-number-input',
+    mode: 'editable',
+    initial: 2.5,
+    external: 8.5,
+    input: 4.5,
+    empty: undefined,
+    lazy: true,
+  },
 ] as const;
 
 for (const spec of valueCases) {
-  /// @case Each gallery mounts two real built-in controls, then receives external value and disabled changes.
+  /// @case Each gallery mounts two real built-in controls, then receives external value and
+  /// disabled changes.
   /// @expect Both instances update in place without producing user input/change events.
   const root = new CueRootElement();
   const sample = ref('first');
   const disabled = ref(false);
   const revision = ref(0);
   const generation = ref(0);
-  const app = createCueRenderer().createApp(defineComponent(() => () => h(spec.component, {
-    key: generation.value,
-    sample: sample.value,
-    disabled: disabled.value,
-    mode: spec.mode,
-    width: 280,
-    externalRevision: revision.value,
-  })));
+  const app = createCueRenderer().createApp(
+    defineComponent(
+      () => () =>
+        h(spec.component, {
+          key: generation.value,
+          sample: sample.value,
+          disabled: disabled.value,
+          mode: spec.mode,
+          width: 280,
+          externalRevision: revision.value,
+        }),
+    ),
+  );
   app.mount(root);
   await nextTick();
   const gallery = root.children[0];
-  const controls = elements(root).filter(element => element.tagName === spec.tag);
+  const controls = elements(root).filter((element) => element.tagName === spec.tag);
   assert.equal(controls.length, 2, spec.tag);
   const [first, second] = controls;
   assert.ok(first instanceof spec.elementType);
@@ -97,15 +157,23 @@ for (const spec of valueCases) {
   second.value = spec.input;
   second.dispatchEvent(new CueInputEvent(spec.input));
   await nextTick();
-  assert.equal(second.value, spec.input, 'A lazy model must not overwrite the visible editing value');
+  assert.equal(
+    second.value,
+    spec.input,
+    'A lazy model must not overwrite the visible editing value',
+  );
   if (spec.lazy) {
-    const expected = typeof spec.external === 'string' ? JSON.stringify(spec.external) : String(spec.external);
+    const expected
+      = typeof spec.external === 'string'
+        ? JSON.stringify(spec.external)
+        : String(spec.external);
     assert.ok(textContent(root).includes(`Committed model: ${expected}`));
   }
   second.dispatchEvent(new CueChangeEvent(spec.input));
   await nextTick();
   if (spec.lazy) {
-    const expected = typeof spec.input === 'string' ? JSON.stringify(spec.input) : String(spec.input);
+    const expected
+      = typeof spec.input === 'string' ? JSON.stringify(spec.input) : String(spec.input);
     assert.ok(textContent(root).includes(`Committed model: ${expected}`));
   }
   assert.ok(textContent(root).includes('3. custom input:'));
@@ -113,9 +181,11 @@ for (const spec of valueCases) {
 
   /// @case Applying the currently selected external preset again resets edited values.
   /// @expect Both instances receive the external value without extra input/change events.
-  const eventLog = elements(root).find(element => element.children.some(
-    child => child instanceof Text && child.data.includes('4. custom change:'),
-  ));
+  const eventLog = elements(root).find((element) =>
+    element.children.some(
+      (child) => child instanceof Text && child.data.includes('4. custom change:'),
+    ),
+  );
   assert.ok(eventLog);
   const eventsBeforeExternalWrite = textContent(eventLog);
   revision.value++;
@@ -129,11 +199,12 @@ for (const spec of valueCases) {
   assert.equal(second.value, spec.empty);
 
   /// @case The gallery remounts after editing, then unmounts entirely.
-  /// @expect New control identities and an empty event log replace the previous instances; no visual nodes remain.
+  /// @expect New control identities and an empty event log replace the previous instances; no
+  /// visual nodes remain.
   generation.value++;
   await nextTick();
   assert.notEqual(root.children[0], gallery);
-  const remounted = elements(root).filter(element => element.tagName === spec.tag);
+  const remounted = elements(root).filter((element) => element.tagName === spec.tag);
   assert.equal(remounted.length, 2);
   assert.notEqual(remounted[0], first);
   assert.notEqual(remounted[1], second);
@@ -146,12 +217,23 @@ for (const spec of valueCases) {
 /// @expect Only that instance increments, and disabled keyboard activation does nothing.
 const buttonRoot = new CueRootElement();
 const buttonDisabled = ref(false);
-const buttonApp = createCueRenderer().createApp(defineComponent(() => () => h(buttonPlayground, {
-  disabled: buttonDisabled.value, sample: 'first', mode: 'short', width: 280, externalRevision: 0,
-})));
+const buttonApp = createCueRenderer().createApp(
+  defineComponent(
+    () => () =>
+      h(buttonPlayground, {
+        disabled: buttonDisabled.value,
+        sample: 'first',
+        mode: 'short',
+        width: 280,
+        externalRevision: 0,
+      }),
+  ),
+);
 buttonApp.mount(buttonRoot);
 await nextTick();
-const buttons = elements(buttonRoot).filter(element => element instanceof CueButtonElement);
+const buttons = elements(buttonRoot).filter(
+  (element) => element instanceof CueButtonElement,
+);
 assert.equal(buttons.length, 2);
 buttons[0].dispatchEvent(new CueKeyboardEvent('keydown', { key: 'Enter' }));
 buttons[0].dispatchEvent(new CueKeyboardEvent('keyup', { key: 'Enter' }));

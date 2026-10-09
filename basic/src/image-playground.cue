@@ -88,6 +88,10 @@ const sources: Record<string, string> = {
   height: 240px;
 }
 
-.fit-fill { object-fit: fill; }
-.fit-contain { object-fit: contain; }
+.fit-fill {
+  object-fit: fill;
+}
+.fit-contain {
+  object-fit: contain;
+}
 </style>

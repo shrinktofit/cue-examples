@@ -15,10 +15,26 @@ const props = defineProps<{
   defaultCaseId: string;
 }>();
 
-const names = ['星际旅行者', 'Nova', '一位名字很长的太空探险家'];
-const hudWidths = [360, 480, 620];
-const nameFontSizes = [18, 24, 32];
-const levels = [1, 42, 89];
+const names = [
+  '星际旅行者',
+  'Nova',
+  '一位名字很长的太空探险家',
+];
+const hudWidths = [
+  360,
+  480,
+  620,
+];
+const nameFontSizes = [
+  18,
+  24,
+  32,
+];
+const levels = [
+  1,
+  42,
+  89,
+];
 const experiencePresets = [
   { label: '0%', ratio: 0 },
   { label: '50%', ratio: 0.5 },
@@ -26,28 +42,35 @@ const experiencePresets = [
 ];
 
 const selectedCase = ref(props.defaultCaseId);
-const playerName = ref(names[0]!);
+const playerName = ref(names[0]);
 const hudWidth = ref(480);
 const nameFontSize = ref(24);
 const level = ref(89);
 const experience = ref(635);
 
-const currentCase = computed(() => props.cases.find((entry) => entry.id === selectedCase.value));
+const currentCase = computed(() =>
+  props.cases.find((entry) => entry.id === selectedCase.value),
+);
 const experienceRatio = computed(() => experience.value / props.experienceMax);
 
-const caseProps = computed((): Record<string, unknown> => selectedCase.value === 'player-profile' ? ({
-  playerName: playerName.value,
-  hudWidth: hudWidth.value,
-  nameFontSize: nameFontSize.value,
-  level: level.value,
-  experience: experience.value,
-  experienceMax: props.experienceMax,
-  experienceRatio: experienceRatio.value,
-  fonts: props.fonts,
-  'onUpdate:experience': (value: number) => {
-    experience.value = Math.round(value);
-  },
-}) : {});
+const caseProps = computed(
+  (): Record<string, unknown> =>
+    selectedCase.value === 'player-profile'
+      ? {
+        'playerName': playerName.value,
+        'hudWidth': hudWidth.value,
+        'nameFontSize': nameFontSize.value,
+        'level': level.value,
+        'experience': experience.value,
+        'experienceMax': props.experienceMax,
+        'experienceRatio': experienceRatio.value,
+        'fonts': props.fonts,
+        'onUpdate:experience': (value: number) => {
+          experience.value = Math.round(value);
+        },
+      }
+      : {},
+);
 
 function setExperiencePreset(ratio: number): void {
   experience.value = Math.round(ratio * props.experienceMax);
@@ -69,10 +92,17 @@ function setExperiencePreset(ratio: number): void {
     </div>
 
     <div :class="['case-box', { 'hotbar-case-box': selectedCase === 'item-hotbar' }]">
-      <component v-if="currentCase" :is="currentCase.component" v-bind="caseProps" />
+      <component
+        :is="currentCase.component"
+        v-if="currentCase"
+        v-bind="caseProps"
+      />
     </div>
 
-    <div v-if="selectedCase === 'player-profile'" class="panel">
+    <div
+      v-if="selectedCase === 'player-profile'"
+      class="panel"
+    >
       <div class="panel-title">PROFILE STATE</div>
       <div class="panel-value">{{ playerName }}</div>
       <div class="choice-row">
@@ -215,7 +245,9 @@ function setExperiencePreset(ratio: number): void {
   padding: 10px;
 }
 
-.hotbar-case-box { width: 1100px; }
+.hotbar-case-box {
+  width: 1100px;
+}
 
 .panel-title {
   color: #b7ff00;

@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch, watchEffect, type Component } from '@bsgames/cue';
+import {
+  computed,
+  reactive,
+  ref,
+  watch,
+  watchEffect,
+  type Component,
+} from '@bsgames/cue';
 
 interface PanelOption {
   label: string;
@@ -83,9 +90,11 @@ function classesFor(panel: Panel, scope: string): string[] {
 }
 
 const basePanels = computed(() => props.panels.filter((panel) => panel.group === 'base'));
-const builtinPanels = computed(() => props.panels.filter((panel) => panel.group === 'controls'));
+const builtinPanels = computed(() =>
+  props.panels.filter((panel) => panel.group === 'controls'),
+);
 const activePanel = computed(
-  () => props.panels.find((panel) => panel.id === selectedPage.value) ?? props.panels[0]!,
+  () => props.panels.find((panel) => panel.id === selectedPage.value) ?? props.panels[0],
 );
 const activeGallery = computed(() => props.galleries[activePanel.value.id]);
 
@@ -111,9 +120,12 @@ const galleryProps = computed((): Record<string, unknown> => {
     const family = valueOf(panel.id, 'font-family');
     return {
       text: valueOf(panel.id, 'sample'),
-      fontFamily: family === 'smiley'
-        ? props.fonts.smiley
-        : family === 'maoken' ? props.fonts.maoken : family,
+      fontFamily:
+          family === 'smiley'
+            ? props.fonts.smiley
+            : family === 'maoken'
+              ? props.fonts.maoken
+              : family,
       textClasses: classesFor(panel, 'text'),
     };
   }
@@ -148,7 +160,8 @@ const galleryProps = computed((): Record<string, unknown> => {
 });
 
 function applyExternalValue(): void {
-  externalRevision[activePanel.value.id] = (externalRevision[activePanel.value.id] ?? 0) + 1;
+  externalRevision[activePanel.value.id]
+    = (externalRevision[activePanel.value.id] ?? 0) + 1;
 }
 
 function remountControls(): void {
@@ -162,7 +175,12 @@ const nativeNoteRef = ref();
 
 function applyRect(
   element: { style: Record<string, unknown> } | undefined,
-  rect: { x: number; y: number; width: number; height: number },
+  rect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  },
 ): void {
   if (!element) {
     return;
@@ -210,7 +228,10 @@ watch(
 <template>
   <div class="basic-app">
     <div class="stage-box">
-      <component :is="activeGallery" v-bind="galleryProps" />
+      <component
+        :is="activeGallery"
+        v-bind="galleryProps"
+      />
     </div>
 
     <div class="nav-row base-row">
@@ -233,7 +254,10 @@ watch(
       >{{ panel.label }}</cue-button>
     </div>
 
-    <div class="panel" ref="panelRef">
+    <div
+      ref="panelRef"
+      class="panel"
+    >
       <div class="panel-title">{{ activePanel.title }}</div>
       <div class="panel-subtitle">{{ activePanel.subtitle }}</div>
       <div class="control-rows">
@@ -243,7 +267,10 @@ watch(
           class="control-row"
         >
           <div class="row-label">{{ control.property }}</div>
-          <div v-if="control.presentation === 'inline'" class="row-options">
+          <div
+            v-if="control.presentation === 'inline'"
+            class="row-options"
+          >
             <cue-button
               v-for="option in control.options"
               :key="option.value"
@@ -264,26 +291,50 @@ watch(
         </div>
       </div>
 
-      <div v-if="activePanel.kind === 'builtin'" class="actions">
-        <cue-button class="action apply" @click="applyExternalValue()">
+      <div
+        v-if="activePanel.kind === 'builtin'"
+        class="actions"
+      >
+        <cue-button
+          class="action apply"
+          @click="applyExternalValue()"
+        >
           Apply external value
         </cue-button>
-        <cue-button class="action remount" @click="remountControls()">
+        <cue-button
+          class="action remount"
+          @click="remountControls()"
+        >
           Remount controls
         </cue-button>
       </div>
-      <div v-if="activePanel.kind === 'builtin'" class="note">
+      <div
+        v-if="activePanel.kind === 'builtin'"
+        class="note"
+      >
         External writes should not emit input/change. Remount resets the two instances and event
         log.
       </div>
     </div>
 
-    <div v-if="activePanel.kind === 'builtin'" class="native-area">
-      <div class="native-title" ref="nativeTitleRef">
+    <div
+      v-if="activePanel.kind === 'builtin'"
+      class="native-area"
+    >
+      <div
+        ref="nativeTitleRef"
+        class="native-title"
+      >
         COCOS EDITBOX · focus / IME comparison
       </div>
-      <div class="native-slot" ref="nativeSlotRef" />
-      <div class="native-note" ref="nativeNoteRef">
+      <div
+        ref="nativeSlotRef"
+        class="native-slot"
+      />
+      <div
+        ref="nativeNoteRef"
+        class="native-note"
+      >
         Check mouse / touch / keyboard and Chinese IME. Switch pages during editing or dragging to
         check cleanup.
       </div>

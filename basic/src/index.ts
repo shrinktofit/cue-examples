@@ -56,17 +56,17 @@ const playgroundSafeArea = {
 };
 
 const galleries: Readonly<Record<string, Component>> = {
-  decoration: decorationPlayground,
-  flex: flexPlayground,
-  text: textPlayground,
-  image: imagePlayground,
-  position: positionPlayground,
+  'decoration': decorationPlayground,
+  'flex': flexPlayground,
+  'text': textPlayground,
+  'image': imagePlayground,
+  'position': positionPlayground,
   'style-api': styleApiPlayground,
-  input: inputPlayground,
-  button: buttonPlayground,
-  toggle: togglePlayground,
-  slider: sliderPlayground,
-  select: selectPlayground,
+  'input': inputPlayground,
+  'button': buttonPlayground,
+  'toggle': togglePlayground,
+  'slider': sliderPlayground,
+  'select': selectPlayground,
   'text-input': textInputPlayground,
   'number-input': numberInputPlayground,
 };
@@ -87,7 +87,9 @@ async function mountCueExample(scene: Scene): Promise<void> {
     loadCueFont('a2917ae7-43ba-4f4c-8a8c-19c29116a884'),
   ]);
   if (!scene.isValid) {
-    for (const font of importedFonts) font.dispose();
+    for (const font of importedFonts) {
+      font.dispose();
+    }
     return;
   }
 
@@ -96,10 +98,9 @@ async function mountCueExample(scene: Scene): Promise<void> {
 
   const cueNode = new Node('Cue Basic Document');
   cueNode.setPosition(DOCUMENT_ORIGIN.x, DOCUMENT_ORIGIN.y, 0);
-  cueNode.addComponent(UITransform).setContentSize(
-    DOCUMENT_SIZE.width,
-    DOCUMENT_SIZE.height,
-  );
+  cueNode
+    .addComponent(UITransform)
+    .setContentSize(DOCUMENT_SIZE.width, DOCUMENT_SIZE.height);
   scene.addChild(cueNode);
   cueNode.addComponent(CueDocument).mount(basicApp, {
     panels: PANELS,
@@ -130,10 +131,7 @@ async function mountCueExample(scene: Scene): Promise<void> {
 
   const fitCameras = (): void => {
     const visibleSize = view.getVisibleSize();
-    const orthoHeight = calculateFittedOrthoHeight(
-      visibleSize,
-      playgroundSafeArea,
-    );
+    const orthoHeight = calculateFittedOrthoHeight(visibleSize, playgroundSafeArea);
     camera.orthoHeight = orthoHeight;
     fixtureCamera.orthoHeight = orthoHeight;
   };
@@ -141,7 +139,9 @@ async function mountCueExample(scene: Scene): Promise<void> {
   screen.on('window-resize', fitCameras);
   scene.once(Node.EventType.NODE_DESTROYED, () => {
     screen.off('window-resize', fitCameras);
-    for (const font of importedFonts) font.dispose();
+    for (const font of importedFonts) {
+      font.dispose();
+    }
   });
 
   console.log('[cue-basic] one Cue document renders the stage and the control plane');
@@ -168,10 +168,9 @@ function mountNativeFixtureCamera(scene: Scene, mainCamera: Camera): Camera {
 function mountNativeEditBox(scene: Scene, camera: Camera): Node {
   const canvasNode = new Node('Native Fixture Canvas');
   canvasNode.layer = Layers.Enum.UI_2D;
-  canvasNode.addComponent(UITransform).setContentSize(
-    playgroundSafeArea.width,
-    playgroundSafeArea.height,
-  );
+  canvasNode
+    .addComponent(UITransform)
+    .setContentSize(playgroundSafeArea.width, playgroundSafeArea.height);
   const canvas = canvasNode.addComponent(Canvas);
   canvas.alignCanvasWithScreen = false;
   canvas.cameraComponent = camera;
@@ -181,12 +180,24 @@ function mountNativeEditBox(scene: Scene, camera: Camera): Node {
   const nativeInput = new Node('Cocos Coexistence EditBox');
   nativeInput.layer = Layers.Enum.UI_2D;
   nativeInput.addComponent(UITransform).setContentSize(placement.width, placement.height);
-  paintRoundedRectangle(nativeInput, placement.width, placement.height, new Color(30, 41, 59), 6);
+  paintRoundedRectangle(
+    nativeInput,
+    placement.width,
+    placement.height,
+    new Color(30, 41, 59),
+    6,
+  );
   const nativeLabel = createLabel('', 15, new Color(226, 232, 240), 320, 32);
   nativeLabel.getComponent(UITransform)!.setAnchorPoint(0, 1);
   nativeLabel.getComponent(Label)!.horizontalAlign = Label.HorizontalAlign.LEFT;
   nativeInput.addChild(nativeLabel);
-  const placeholder = createLabel('Type here, then focus a Cue input', 13, new Color(148, 163, 184), 320, 32);
+  const placeholder = createLabel(
+    'Type here, then focus a Cue input',
+    13,
+    new Color(148, 163, 184),
+    320,
+    32,
+  );
   placeholder.getComponent(UITransform)!.setAnchorPoint(0, 1);
   placeholder.getComponent(Label)!.horizontalAlign = Label.HorizontalAlign.LEFT;
   nativeInput.addChild(placeholder);

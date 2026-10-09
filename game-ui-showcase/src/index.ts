@@ -39,7 +39,9 @@ async function mountShowcase(scene: Scene): Promise<void> {
     loadCueFont('a2917ae7-43ba-4f4c-8a8c-19c29116a884'),
   ]);
   if (!scene.isValid) {
-    for (const font of fonts) font.dispose();
+    for (const font of fonts) {
+      font.dispose();
+    }
     return;
   }
 
@@ -69,7 +71,9 @@ async function mountShowcase(scene: Scene): Promise<void> {
   screen.on('window-resize', fitCamera);
   scene.once(Node.EventType.NODE_DESTROYED, () => {
     screen.off('window-resize', fitCamera);
-    for (const font of fonts) font.dispose();
+    for (const font of fonts) {
+      font.dispose();
+    }
   });
 
   console.log('[cue-game-ui-showcase] one Cue document renders the case and its controls');
@@ -82,7 +86,9 @@ if (!EDITOR_NOT_IN_PREVIEW) {
   } else {
     director.once(Director.EVENT_AFTER_SCENE_LAUNCH, () => {
       const launchedScene = director.getScene();
-      if (!launchedScene) throw new Error('Game UI Showcase requires an active scene.');
+      if (!launchedScene) {
+        throw new Error('Game UI Showcase requires an active scene.');
+      }
       void mountShowcase(launchedScene);
     });
   }

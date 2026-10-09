@@ -12,14 +12,7 @@ defineProps<{
       <div class="item item-tall color-2">B</div>
       <div class="item color-3">C</div>
       <div class="item item-small color-1">D</div>
-      <div
-        :class="[
-          'item',
-          'featured-item',
-          'color-4',
-          featuredItemClasses,
-        ]"
-      >E(Selected)</div>
+      <div :class="['item', 'featured-item', 'color-4', featuredItemClasses]">E(Selected)</div>
       <div class="item item-tall color-2">F</div>
       <div class="item item-wide color-3">G</div>
       <div class="item item-small color-1">H</div>

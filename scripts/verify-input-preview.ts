@@ -1,6 +1,16 @@
+import type { CuePointerEvents } from '@bsgames/cue';
+import type {
+  PreviewNode,
+  PreviewHost,
+  PreviewComponent,
+  PreviewElement,
+} from './preview-types.ts';
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
-import { createControlPlaneClicker, preparePreviewVerification } from './preview-verification.ts';
+import {
+  createControlPlaneClicker,
+  preparePreviewVerification,
+} from './preview-verification.ts';
 
 const { chromium, outputDirectory, targetUrl } = await preparePreviewVerification(
   '063f3c76-b538-413c-bdbe-fe65821e9be5',
@@ -11,10 +21,22 @@ const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 850 } });
   const errors: string[] = [];
-  page.on('console', (e: { type(): string; text(): string }) => { if (e.type() === 'error') errors.push(e.text()); });
+  page.on('console', (e: { type(): string; text(): string }) => {
+    if (e.type() === 'error') {
+      errors.push(e.text());
+    }
+  });
   page.on('pageerror', (e: Error) => errors.push(e.stack ?? e.message));
   await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForFunction(() => (window as any).cc?.director.getScene()?.children.some((node: any) => node.getComponents((window as any).cc.Component).some((component: any) => component.rootElement?.children.length)));
+  await page.waitForFunction(() =>
+    window.cc?.director
+      .getScene()
+      ?.children.some((node) =>
+        node
+          .getComponents(window.cc.Component)
+          .some((component: PreviewComponent) => component.rootElement?.children.length),
+      ),
+  );
   await page.waitForTimeout(500);
   // Click controls through real mouse input at the coordinates the shared panel
   // model derives for the single Cue document.
@@ -22,15 +44,28 @@ try {
   await clickNative('Input Gallery');
   await page.screenshot({ path: resolve(outputDirectory, 'cue-input-initial.png') });
   await page.evaluate(() => {
-    const cc = (window as any).cc;
-    const node = cc.director.getScene().children.find((node: any) => node.getComponents(cc.Component).some((c: any) => c.rootElement));
-    const root = node.getComponents(cc.Component).find((c: any) => c.rootElement).rootElement;
-    (window as any).__cueRoot = root;
+    const cc = window.cc;
+    const node = cc.director
+      .getScene()!
+      .children.find((node) =>
+        node.getComponents(cc.Component).some((c: PreviewComponent) => c.rootElement),
+      );
+    const root = node!
+      .getComponents(cc.Component)
+      .find(
+        (component): component is PreviewHost => 'rootElement' in component,
+      )!.rootElement;
+    window.__cueRoot = root;
   });
-  const texts = async (): Promise<string[]> => page.evaluate(() => {
-    const walk = (n: any): any[] => [n, ...(n.children ?? []).flatMap(walk)];
-    return walk((window as any).__cueRoot).filter(n => typeof n.data === 'string').map(n => n.data);
-  });
+  const texts = async (): Promise<string[]> =>
+    page.evaluate(() => {
+      const walk = (n: PreviewNode): PreviewNode[] => [
+        n,
+        ...(n.children ?? []).flatMap(walk),
+      ];
+      return walk(window.__cueRoot)
+        .flatMap((n) => typeof n.data === 'string' ? [n.data] : []);
+    });
   await page.mouse.click(430, 350);
   await page.waitForTimeout(150);
   assert.ok((await texts()).includes('Clicks: 1'), JSON.stringify(await texts()));
@@ -44,7 +79,7 @@ try {
   await page.mouse.down();
   await page.mouse.move(920, 550, { steps: 5 });
   await page.waitForTimeout(150);
-  assert.ok((await texts()).some(text => text.startsWith('Pointer 1:')));
+  assert.ok((await texts()).some((text) => text.startsWith('Pointer 1:')));
   await page.screenshot({ path: resolve(outputDirectory, 'cue-input-drag.png') });
   await page.mouse.up();
   await page.waitForTimeout(150);
@@ -64,7 +99,7 @@ try {
   await page.mouse.up({ button: 'right' });
   await page.mouse.move(900, 540);
   await page.waitForTimeout(150);
-  assert.ok((await texts()).some(text => text.startsWith('Pointer 1:')));
+  assert.ok((await texts()).some((text) => text.startsWith('Pointer 1:')));
   await page.mouse.up();
   await page.waitForTimeout(100);
   assert.ok((await texts()).includes('Released'));
@@ -74,24 +109,38 @@ try {
   await page.evaluate(() => {
     const cover = document.createElement('div');
     cover.id = 'capture-validation-cover';
-    cover.style.cssText = 'position:fixed;right:0;top:0;width:400px;height:100%;z-index:99999;';
+    cover.style.cssText
+      = 'position:fixed;right:0;top:0;width:400px;height:100%;z-index:99999;';
     document.body.append(cover);
   });
   await page.mouse.move(1200, 520, { steps: 3 });
   await page.waitForTimeout(150);
-  assert.ok((await texts()).some(text => text.startsWith('Pointer 1: 759,')), JSON.stringify(await texts()));
+  assert.ok(
+    (await texts()).some((text) => text.startsWith('Pointer 1: 759,')),
+    JSON.stringify(await texts()),
+  );
   await page.mouse.up();
-  await page.evaluate(() => document.getElementById('capture-validation-cover')!.remove());
+  await page.evaluate(() =>
+    document.getElementById('capture-validation-cover')!.remove(),
+  );
   await page.waitForTimeout(100);
   assert.ok((await texts()).includes('Released'));
   await clickNative('example: propagation');
   await page.mouse.click(280, 370);
   await page.waitForTimeout(100);
-  assert.ok((await texts()).some(text => text.endsWith('capture: parent\ntarget: inner\nbubble: parent')), JSON.stringify(await texts()));
+  assert.ok(
+    (await texts()).some((text) =>
+      text.endsWith('capture: parent\ntarget: inner\nbubble: parent'),
+    ),
+    JSON.stringify(await texts()),
+  );
   await clickNative('propagation: .stop');
   await page.mouse.click(280, 370);
   await page.waitForTimeout(100);
-  assert.ok((await texts()).some(text => text.endsWith('capture: parent\ntarget: stopped')), JSON.stringify(await texts()));
+  assert.ok(
+    (await texts()).some((text) => text.endsWith('capture: parent\ntarget: stopped')),
+    JSON.stringify(await texts()),
+  );
   await clickNative('example: hit regions');
   await page.screenshot({ path: resolve(outputDirectory, 'cue-input-hit.png') });
   await page.mouse.click(430, 420);
@@ -118,31 +167,46 @@ try {
   await page.waitForTimeout(100);
   assert.ok((await texts()).includes('Front: 3'));
   await page.evaluate(() => {
-    const walk = (n: any): any[] => [n, ...(n.children ?? []).flatMap(walk)];
-    const front = walk((window as any).__cueRoot).find(n => n.data === 'Front: 3').parent;
-    front.parent.style.pointerEvents = 'none';
-    (window as any).__front = front;
+    const walk = (n: PreviewNode): PreviewNode[] => [
+      n,
+      ...(n.children ?? []).flatMap(walk),
+    ];
+    const front = walk(window.__cueRoot).find((n) => n.data === 'Front: 3')!.parent;
+    front.parent.style.pointerEvents = 'none' as CuePointerEvents;
+    window.__front = front as PreviewElement;
   });
   await page.waitForTimeout(100);
   await page.mouse.click(450, 420);
   await page.waitForTimeout(100);
   assert.ok((await texts()).includes('Front: 3'));
   await page.evaluate(() => {
-    (window as any).__front.style.pointerEvents = 'auto';
-    (window as any).__bubble = 0;
-    (window as any).__front.parent.addEventListener('click', () => (window as any).__bubble++);
+    window.__front.style.pointerEvents = 'auto' as CuePointerEvents;
+    window.__bubble = 0;
+    window.__front.parent.addEventListener('click', () => window.__bubble++);
   });
   await page.waitForTimeout(100);
   await page.mouse.click(450, 420);
   await page.waitForTimeout(100);
   assert.ok((await texts()).includes('Front: 4'));
-  assert.equal(await page.evaluate(() => (window as any).__bubble), 1);
-  assert.equal(await page.evaluate(() => (window as any).__front.clientWidth), 196);
+  assert.equal(await page.evaluate(() => window.__bubble), 1);
+  assert.equal(await page.evaluate(() => window.__front.clientWidth), 196);
   // A real browser touch goes through the engine source, not dispatchEvent().
   await clickNative('example: click / hover');
   const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 430, y: 350, id: 7 }] });
+  await cdp.send('Emulation.setTouchEmulationEnabled', {
+    enabled: true,
+    maxTouchPoints: 5,
+  });
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [
+      {
+        x: 430,
+        y: 350,
+        id: 7,
+      },
+    ],
+  });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await page.waitForTimeout(200);
   assert.ok((await texts()).includes('Clicks: 2'), JSON.stringify(await texts()));
@@ -155,38 +219,64 @@ try {
   await page.mouse.down();
   await page.mouse.move(430, 350);
   await page.evaluate(() => {
-    const cc = (window as any).cc;
-    const host = cc.director.getScene().children
-      .flatMap((node: any) => node.getComponents(cc.Component))
-      .find((component: any) => component.rootElement === (window as any).__cueRoot);
-    (window as any).__cueHost = host;
+    const cc = window.cc;
+    const host = cc.director
+      .getScene()!
+      .children.flatMap((node) => node.getComponents(cc.Component))
+      .find((component): component is PreviewHost =>
+        'rootElement' in component && component.rootElement === window.__cueRoot,
+      )!;
+    window.__cueHost = host;
     host.enabled = false;
   });
   await page.waitForTimeout(150);
   assert.ok((await texts()).includes('Drag cancelled'));
   await page.mouse.up();
-  await page.evaluate(() => { (window as any).__cueHost.enabled = true; });
+  await page.evaluate(() => {
+    window.__cueHost.enabled = true;
+  });
   await page.waitForTimeout(150);
   await page.mouse.move(420, 350);
   await page.mouse.down();
   await page.mouse.move(430, 350);
-  assert.equal(await page.evaluate(() => {
-    const walk = (node: any): any[] => [node, ...(node.children ?? []).flatMap(walk)];
-    const pad = walk((window as any).__cueRoot)
-      .find(node => node.data === 'Drag beyond this border').parent.parent;
-    (window as any).__capturedPad = pad;
-    return pad.hasPointerCapture(1);
-  }), true);
-  await page.evaluate(() => { (window as any).__cueHost.unmount(); });
-  assert.deepEqual(await page.evaluate(() => ({
-    children: (window as any).__cueRoot.children.length,
-    captured: (window as any).__capturedPad.hasPointerCapture(1),
-    width: (window as any).__capturedPad.clientWidth,
-  })), { children: 0, captured: false, width: 0 });
+  assert.equal(
+    await page.evaluate(() => {
+      const walk = (node: PreviewNode): PreviewNode[] => [
+        node,
+        ...(node.children ?? []).flatMap(walk),
+      ];
+      const pad = walk(window.__cueRoot).find(
+        (node) => node.data === 'Drag beyond this border',
+      )!.parent.parent;
+      window.__capturedPad = pad;
+      return pad.hasPointerCapture(1);
+    }),
+    true,
+  );
+  await page.evaluate(() => {
+    window.__cueHost.unmount();
+  });
+  assert.deepEqual(
+    await page.evaluate(() => ({
+      children: window.__cueRoot.children.length,
+      captured: window.__capturedPad.hasPointerCapture(1),
+      width: window.__capturedPad.clientWidth,
+    })),
+    {
+      children: 0,
+      captured: false,
+      width: 0,
+    },
+  );
   await page.mouse.up();
   await page.waitForTimeout(150);
   assert.equal(errors.length, 0, errors.join('\n'));
-  console.log('PASS: mouse/touch click, hover, capture/outside-canvas/chords/blur, propagation, transformed clipping, pointer-events inheritance, host disable/unmount');
+  console.log(
+    ('PASS: mouse/touch click, hover, '
+      + 'capture/outside-canvas/chords/blur, propagation, '
+      + 'transformed clipping, pointer-events inheritance, host '
+      + 'disable/unmount'),
+  );
 } finally {
   await browser.close();
 }

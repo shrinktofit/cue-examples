@@ -25,9 +25,18 @@ export const DOCUMENT_ORIGIN = { x: -500, y: 250 } as const;
 export const DOCUMENT_SIZE = { width: 1_000, height: 500 } as const;
 
 /** The stage column that hosts whichever gallery is selected. */
-export const STAGE_BOX: CueRect = { x: 50, y: 70, width: 500, height: 410 };
+export const STAGE_BOX: CueRect = {
+  x: 50,
+  y: 70,
+  width: 500,
+  height: 410,
+};
 
-export const PAGE_BUTTON = { width: 61, height: 22, gap: 4 } as const;
+export const PAGE_BUTTON = {
+  width: 61,
+  height: 22,
+  gap: 4,
+} as const;
 export const PAGE_NAV_LEFT = 544;
 export const PAGE_GROUP_LABEL_LEFT = 498;
 export const PAGE_NAV_TOP = { base: 7, controls: 475 } as const;
@@ -43,7 +52,12 @@ export function pageTabCenter(
   };
 }
 
-export const PANEL_BOX: CueRect = { x: 570, y: 40, width: 400, height: 420 };
+export const PANEL_BOX: CueRect = {
+  x: 570,
+  y: 40,
+  width: 400,
+  height: 420,
+};
 
 /** Shared pitch of the control rows inside a panel. */
 export const CONTROL_ROW = { height: 21, gap: 4 } as const;
@@ -58,7 +72,11 @@ export const PANEL_INSET = 11;
 export const PANEL_HEADER_HEIGHT = 16 + 4 + 11 + 4;
 export const ROW_LABEL_WIDTH = 96;
 export const ROW_OPTION_GAP = 3;
-export const ACTION_ROW = { height: 26, gap: 8, marginTop: 6 } as const;
+export const ACTION_ROW = {
+  height: 26,
+  gap: 8,
+  marginTop: 6,
+} as const;
 export const SELECT_OPTION_HEIGHT = 20;
 
 export function panelRowCenterY(index: number): number {
@@ -164,7 +182,12 @@ export function cueToWorld(cueX: number, cueY: number): { x: number; y: number }
 }
 
 /** World-space centre and size of the native EditBox fixture. */
-export function nativeInputPlacement(): { x: number; y: number; width: number; height: number } {
+export function nativeInputPlacement(): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
   const centre = cueToWorld(
     NATIVE_SLOT.x + NATIVE_SLOT.width / 2,
     NATIVE_SLOT.y + NATIVE_SLOT.height / 2,

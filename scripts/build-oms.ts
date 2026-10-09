@@ -7,21 +7,38 @@ import { pathToFileURL } from 'node:url';
 import { startOmsWorker, timed } from './oms-worker.ts';
 
 const command = process.argv[2];
-assert.ok(command === 'build' || command === 'test', 'Usage: node ../scripts/build-oms.ts build|test (from a project)');
+assert.ok(
+  command === 'build' || command === 'test',
+  'Usage: node ../scripts/build-oms.ts build|test (from a project)',
+);
 const project = process.cwd();
 
 async function assertDirectCueInputs(): Promise<void> {
-  assert.equal(existsSync(join(project, 'src/generated')), false,
-    'Remove the obsolete src/generated directory: OMS must compile .cue directly.');
+  assert.equal(
+    existsSync(join(project, 'src/generated')),
+    false,
+    'Remove the obsolete src/generated directory: OMS must compile .cue directly.',
+  );
   const files = await readdir(join(project, 'src'), { recursive: true });
   assert.ok(files.some((file) => file.endsWith('.cue')));
   for (const file of files.filter((file) => /\.(?:ts|cue|js)$/u.test(file))) {
-    assert.ok(!/\.cue\.(?:script\.|template\.|style\.)?js$/u.test(file), `Unexpected intermediate source ${file}`);
-    assert.doesNotMatch(await readFile(join(project, 'src', file), 'utf8'), /generated\/cue|\.cue\.js/u, file);
+    assert.ok(
+      !/\.cue\.(?:script\.|template\.|style\.)?js$/u.test(file),
+      `Unexpected intermediate source ${file}`,
+    );
+    assert.doesNotMatch(
+      await readFile(join(project, 'src', file), 'utf8'),
+      /generated\/cue|\.cue\.js/u,
+      file,
+    );
   }
   const packageJson = JSON.parse(await readFile(join(project, 'package.json'), 'utf8'));
   assert.equal(packageJson.devDependencies?.['@bsgames/cue-cli'], undefined);
-  assert.ok(!Object.values(packageJson.scripts).some((script) => /cue compile/u.test(String(script))));
+  assert.ok(
+    !Object.values(packageJson.scripts).some((script) =>
+      String(script).includes('cue compile'),
+    ),
+  );
 }
 
 await assertDirectCueInputs();
@@ -31,26 +48,44 @@ for (const entry of await readdir(join(project, 'extensions'))) {
   const manifest = JSON.parse(await readFile(join(path, 'package.json'), 'utf8'));
   extensionBuildOptions.push({ name: manifest.name, path });
 }
-const worker = await startOmsWorker(project, join(project, 'extensions/oh-my-script'), extensionBuildOptions);
+const worker = await startOmsWorker(
+  project,
+  join(project, 'extensions/oh-my-script'),
+  extensionBuildOptions,
+);
 const { ipc } = worker;
 try {
   const profile = command === 'test' ? 'headless' : 'default';
-  const result: any = await timed(ipc.invoke('rebuild', { profiles: [profile] }));
-  assert.equal(result[profile]?.ok, true, result[profile]?.error?.message ?? 'Missing profile build result');
+  const result = await timed(ipc.invoke('rebuild', { profiles: [profile] }));
+  assert.equal(
+    result[profile]?.ok,
+    true,
+    result[profile]?.error?.message ?? 'Missing profile build result',
+  );
   if (command === 'test') {
-    await import(pathToFileURL(join(project, 'temp/oms/out-headless/bundle-main.headless.js')).href);
+    await import(
+      pathToFileURL(join(project, 'temp/oms/out-headless/bundle-main.headless.js')).href,
+    );
   } else {
     const buildDir = resolve(project, 'build/oms-validation');
-    await timed(ipc.invoke('build-prod', {
-      buildDir,
-      debug: true,
-      sourceMaps: true,
-      platform: 'web',
-      headless: false,
-    }));
-    for (const output of ['temp/oms/out/bundle-main.js', 'build/oms-validation/oms/bundle-main.js']) {
+    await timed(
+      ipc.invoke('build-prod', {
+        buildDir,
+        debug: true,
+        sourceMaps: true,
+        platform: 'web',
+        headless: false,
+      }),
+    );
+    for (const output of [
+      'temp/oms/out/bundle-main.js',
+      'build/oms-validation/oms/bundle-main.js',
+    ]) {
       const code = await readFile(join(project, output), 'utf8');
-      assert.ok(code.includes('__cueStyleSheets'), `Missing compiled Cue component in ${output}`);
+      assert.ok(
+        code.includes('__cueStyleSheets'),
+        `Missing compiled Cue component in ${output}`,
+      );
       assert.doesNotMatch(code, /generated\/cue/u);
     }
   }
