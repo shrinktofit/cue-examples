@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "allowJs": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": [
+      "node",
+      "@cocos/creator-types/engine"
+    ],
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "eslint*.js",
+    "scripts/**/*.ts",
+    "basic/**/*.ts",
+    "basic/**/*.js",
+    "basic/**/*.cue",
+    "game-ui-showcase/**/*.ts",
+    "game-ui-showcase/**/*.js",
+    "game-ui-showcase/**/*.cue"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/temp",
+    "**/library",
+    "**/local",
+    "**/build",
+    "**/native",
+    "**/extensions",
+    "**/assets/oms.ts"
+  ]
+}

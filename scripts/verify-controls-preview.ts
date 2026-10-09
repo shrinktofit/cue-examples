@@ -1,7 +1,19 @@
+import type { Node as SceneNode } from 'cc';
+import type { CuePointerEvent } from '@bsgames/cue';
+import type {
+  PreviewNode,
+  PreviewHost,
+  PreviewComponent,
+  PointerProbe,
+  TouchTrace,
+} from './preview-types.ts';
 import assert from 'node:assert/strict';
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { createControlPlaneClicker, preparePreviewVerification } from './preview-verification.ts';
+import {
+  createControlPlaneClicker,
+  preparePreviewVerification,
+} from './preview-verification.ts';
 
 const { chromium, outputDirectory, targetUrl } = await preparePreviewVerification(
   '063f3c76-b538-413c-bdbe-fe65821e9be5',
@@ -10,16 +22,24 @@ const { chromium, outputDirectory, targetUrl } = await preparePreviewVerificatio
 const browser = await chromium.launch({ headless: true });
 const errors: string[] = [];
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 850 }, hasTouch: true });
+  const page = await browser.newPage({
+    viewport: { width: 1440, height: 850 },
+    hasTouch: true,
+  });
   page.on('console', (event: { type(): string; text(): string }) => {
-    if (event.type() === 'error') errors.push(event.text());
+    if (event.type() === 'error') {
+      errors.push(event.text());
+    }
   });
   page.on('pageerror', (error: Error) => errors.push(error.stack ?? error.message));
   await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForFunction(() => {
-    const cc = (window as any).cc;
-    return cc?.director.getScene()?.getChildByName('Cue Basic Document')?.getComponents(cc.Component)
-      .some((component: any) => component.rootElement?.children.length);
+    const cc = window.cc;
+    return cc?.director
+      .getScene()
+      ?.getChildByName('Cue Basic Document')
+      ?.getComponents(cc.Component)
+      .some((component: PreviewComponent) => component.rootElement?.children.length);
   });
 
   // The control plane is Cue now: navigation and state controls are clicked at
@@ -27,72 +47,159 @@ try {
   // (the EditBox fixture) keeps its scene-node lookup.
   const clickNative = createControlPlaneClicker(page, 'Cue Basic Document').click;
 
-  const snapshot = async (tag: string): Promise<{ values: unknown[]; disabled: boolean[]; focused: boolean[]; text: string; nativeText: string }> => page.evaluate((tag: string) => {
-    const cc = (window as any).cc;
-    const scene = cc.director.getScene();
-    const host = scene.getChildByName('Cue Basic Document').getComponents(cc.Component).find((component: any) => component.rootElement);
-    const walk = (node: any): any[] => [node, ...(node.children ?? []).flatMap(walk)];
-    const nodes = walk(host.rootElement);
-    const controls = nodes.filter(node => node.tagName === tag);
-    const nativeEditor = walk(scene).find(node => node.name === 'Cocos Coexistence EditBox' && node.activeInHierarchy)?.getComponent('cc.EditBox');
-    return {
-      values: controls.map(control => control.value),
-      disabled: controls.map(control => control.disabled),
-      focused: controls.map(control => control.focused),
-      text: nodes.filter(node => typeof node.data === 'string').map(node => node.data).join(''),
-      nativeText: nativeEditor?.string ?? '',
-    };
-  }, tag);
+  const snapshot = async (
+    tag: string,
+  ): Promise<{
+    values: unknown[];
+    disabled: boolean[];
+    focused: boolean[];
+    text: string;
+    nativeText: string;
+  }> =>
+    page.evaluate((tag: string) => {
+      const cc = window.cc;
+      const scene = cc.director.getScene()!;
+      const host = scene
+        .getChildByName('Cue Basic Document')!
+        .getComponents(cc.Component)
+        .find((component): component is PreviewHost => 'rootElement' in component)!;
+      const walk = (node: PreviewNode): PreviewNode[] => [
+        node,
+        ...(node.children ?? []).flatMap(walk),
+      ];
+      const nodes = walk(host.rootElement);
+      const controls = nodes.filter((node) => node.tagName === tag);
+      const walkScene = (node: SceneNode): SceneNode[] => [
+        node,
+        ...node.children.flatMap(walkScene),
+      ];
+      const nativeEditor = walkScene(scene)
+        .find(
+          (node) => node.name === 'Cocos Coexistence EditBox' && node.activeInHierarchy,
+        )
+        ?.getComponent(cc.EditBox);
+      return {
+        values: controls.map((control) => control.value),
+        disabled: controls.map((control) => control.disabled),
+        focused: controls.map((control) => control.focused),
+        text: nodes
+          .filter((node) => typeof node.data === 'string')
+          .map((node) => node.data)
+          .join(''),
+        nativeText: nativeEditor?.string ?? '',
+      };
+    }, tag);
 
   // Focus uses the public control API; all keys/text below enter through Chromium.
   // Pointer checks below also exercise real hit testing; OS IME remains a manual check.
   const focusControl = async (tag: string, index = 0): Promise<void> => {
-    await page.evaluate(({ tag, index }: { tag: string; index: number }) => {
-      const cc = (window as any).cc;
-      const host = cc.director.getScene().getChildByName('Cue Basic Document').getComponents(cc.Component)
-        .find((component: any) => component.rootElement);
-      const walk = (node: any): any[] => [node, ...(node.children ?? []).flatMap(walk)];
-      const controls = walk(host.rootElement).filter(node => node.tagName === tag);
-      if (!controls[index]) throw new Error('Missing Cue control: ' + tag + '[' + index + ']');
-      controls[index].focus();
-    }, { tag, index });
+    await page.evaluate(
+      ({ tag, index }: { tag: string; index: number }) => {
+        const cc = window.cc;
+        const host = cc.director
+          .getScene()!
+          .getChildByName('Cue Basic Document')!
+          .getComponents(cc.Component)
+          .find((component): component is PreviewHost => 'rootElement' in component)!;
+        const walk = (node: PreviewNode): PreviewNode[] => [
+          node,
+          ...(node.children ?? []).flatMap(walk),
+        ];
+        const controls = walk(host.rootElement).filter((node) => node.tagName === tag);
+        if (!controls[index]) {
+          throw new Error('Missing Cue control: ' + tag + '[' + index + ']');
+        }
+        controls[index].focus();
+      },
+      { tag, index },
+    );
     await page.waitForTimeout(100);
   };
 
   // Locate a visible control by real mouse moves and public pointer events.
   // This observes hit testing without reading private renderer/layout objects.
-  const pointerBox = async (tag: string, index = 0, optionLabel?: string): Promise<{ x: number; y: number; left: number; top: number; width: number; height: number }> => {
-    await page.evaluate(({ tag, index, optionLabel }: { tag: string; index: number; optionLabel?: string }) => {
-      const cc = (window as any).cc;
-      const scene = cc.director.getScene();
-      const hostNode = scene.getChildByName('Cue Basic Document');
-      const host = hostNode.getComponents(cc.Component).find((component: any) => component.rootElement);
-      const walk = (node: any): any[] => [node, ...(node.children ?? []).flatMap(walk)];
-      const control = walk(host.rootElement).filter(node => node.tagName === tag)[index];
-      const target = optionLabel === undefined ? control : walk(control).find(node =>
-        node.children?.some((child: any) => child.data === optionLabel));
-      if (!target) throw new Error('Missing pointer target: ' + tag + ' ' + optionLabel);
-      const camera = scene.renderScene.cameras.find((camera: any) => camera.visibility & hostNode.layer);
-      const origin = camera.worldToScreen(new cc.Vec3(), hostNode.worldPosition);
-      const unitWorld = cc.Vec3.transformMat4(new cc.Vec3(), new cc.Vec3(1, 0, 0), hostNode.worldMatrix);
-      const unitScreen = camera.worldToScreen(new cc.Vec3(), unitWorld);
-      const scale = (unitScreen.x - origin.x) / cc.screen.devicePixelRatio;
-      const probe: any = { hit: undefined, scale };
-      const listener = (event: any) => {
-        if (event.target === target) {
-          probe.hit = { offsetX: event.offsetX, offsetY: event.offsetY, width: target.clientWidth, height: target.clientHeight };
+  const pointerBox = async (
+    tag: string,
+    index = 0,
+    optionLabel?: string,
+  ): Promise<{
+    x: number;
+    y: number;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  }> => {
+    await page.evaluate(
+      ({
+        tag,
+        index,
+        optionLabel,
+      }: {
+        tag: string;
+        index: number;
+        optionLabel?: string;
+      }) => {
+        const cc = window.cc;
+        const scene = cc.director.getScene()!;
+        const hostNode = scene.getChildByName('Cue Basic Document')!;
+        const host = hostNode
+          .getComponents(cc.Component)
+          .find((component): component is PreviewHost => 'rootElement' in component)!;
+        const walk = (node: PreviewNode): PreviewNode[] => [
+          node,
+          ...(node.children ?? []).flatMap(walk),
+        ];
+        const control = walk(host.rootElement).filter((node) => node.tagName === tag)[
+          index
+        ];
+        const target
+          = optionLabel === undefined
+            ? control
+            : walk(control).find((node) =>
+              node.children?.some((child: PreviewNode) => child.data === optionLabel),
+            )!;
+        if (!target) {
+          throw new Error('Missing pointer target: ' + tag + ' ' + optionLabel);
         }
-      };
-      target.addEventListener('pointermove', listener);
-      probe.stop = () => target.removeEventListener('pointermove', listener);
-      (window as any).__cueGalleryPointerProbe = probe;
-    }, { tag, index, optionLabel });
+        const camera = scene.renderScene!.cameras.find(
+          (camera) => camera.visibility & hostNode.layer,
+        )!;
+        const origin = camera.worldToScreen(new cc.Vec3(), hostNode.worldPosition);
+        const unitWorld = cc.Vec3.transformMat4(
+          new cc.Vec3(),
+          new cc.Vec3(1, 0, 0),
+          hostNode.worldMatrix,
+        );
+        const unitScreen = camera.worldToScreen(new cc.Vec3(), unitWorld);
+        const scale = (unitScreen.x - origin.x) / cc.screen.devicePixelRatio;
+        const probe: PointerProbe = { scale, stop: () => undefined };
+        const listener = (event: CuePointerEvent) => {
+          if (event.target as unknown === target) {
+            probe.hit = {
+              offsetX: event.offsetX,
+              offsetY: event.offsetY,
+              width: target.clientWidth,
+              height: target.clientHeight,
+            };
+          }
+        };
+        target.addEventListener('pointermove', listener);
+        probe.stop = () => target.removeEventListener('pointermove', listener);
+        window.__cueGalleryPointerProbe = probe;
+      },
+      {
+        tag,
+        index,
+        optionLabel,
+      },
+    );
     try {
       for (let y = 275; y < 735; y += 8) {
         await page.mouse.move(128, y);
         await page.waitForTimeout(20);
         const probe = await page.evaluate(() => {
-          const probe = (window as any).__cueGalleryPointerProbe;
+          const probe = window.__cueGalleryPointerProbe!;
           return { hit: probe.hit, scale: probe.scale };
         });
         if (probe.hit) {
@@ -100,14 +207,21 @@ try {
           const top = y - probe.hit.offsetY * probe.scale;
           const width = probe.hit.width * probe.scale;
           const height = probe.hit.height * probe.scale;
-          return { left, top, width, height, x: left + width / 2, y: top + height / 2 };
+          return {
+            left,
+            top,
+            width,
+            height,
+            x: left + width / 2,
+            y: top + height / 2,
+          };
         }
       }
       throw new Error('No pointer hit for visible target: ' + tag + ' ' + optionLabel);
     } finally {
       await page.evaluate(() => {
-        (window as any).__cueGalleryPointerProbe.stop();
-        delete (window as any).__cueGalleryPointerProbe;
+        window.__cueGalleryPointerProbe!.stop();
+        delete window.__cueGalleryPointerProbe;
       });
     }
   };
@@ -115,39 +229,80 @@ try {
   // API focus cannot reproduce the first-pointer-click selection race.
   // Read after native keyup and queued selectionchange/frame work have settled.
   const selectionTrace: unknown[] = [];
-  const selectionChecks: { context: string; actual: unknown; expected: unknown }[] = [];
+  const selectionChecks: Array<{
+    context: string;
+    actual: unknown;
+    expected: unknown;
+  }> = [];
   for (const { label, tag, value, text } of [
-    { label: 'TextInput', tag: 'cue-text-input', value: 'Nova', text: 'Nova' },
-    { label: 'NumberInput', tag: 'cue-number-input', value: 2.5, text: '2.5' },
+    {
+      label: 'TextInput',
+      tag: 'cue-text-input',
+      value: 'Nova',
+      text: 'Nova',
+    },
+    {
+      label: 'NumberInput',
+      tag: 'cue-number-input',
+      value: 2.5,
+      text: '2.5',
+    },
   ]) {
     await clickNative(label + ' Gallery');
     for (const index of [0, 1]) {
       const input = await pointerBox(tag, index);
       const recordSelection = async (
-        action: string, start: number, end = start, direction?: 'forward' | 'backward',
+        action: string,
+        start: number,
+        end = start,
+        direction?: 'forward' | 'backward',
       ): Promise<void> => {
         await page.waitForTimeout(150);
-        const state = await page.evaluate(({ tag, index }: { tag: string; index: number }) => {
-          const cc = (window as any).cc;
-          const host = cc.director.getScene().getChildByName('Cue Basic Document').getComponents(cc.Component)
-            .find((component: any) => component.rootElement);
-          const walk = (node: any): any[] => [node, ...(node.children ?? []).flatMap(walk)];
-          const control = walk(host.rootElement).filter(node => node.tagName === tag)[index];
-          const editor = document.activeElement;
-          if (!(editor instanceof HTMLInputElement || editor instanceof HTMLTextAreaElement)) {
-            throw new Error('Pointer click did not focus a DOM editor: ' + tag + '[' + index + ']');
-          }
-          return {
-            cue: {
-              value: control.value, focused: control.focused,
-              start: control.selectionStart, end: control.selectionEnd, direction: control.selectionDirection,
-            },
-            dom: {
-              cueEditor: editor.matches('[data-cue-editor]'), value: editor.value,
-              start: editor.selectionStart, end: editor.selectionEnd, direction: editor.selectionDirection,
-            },
-          };
-        }, { tag, index });
+        const state = await page.evaluate(
+          ({ tag, index }: { tag: string; index: number }) => {
+            const cc = window.cc;
+            const host = cc.director
+              .getScene()!
+              .getChildByName('Cue Basic Document')!
+              .getComponents(cc.Component)
+              .find((component): component is PreviewHost => 'rootElement' in component)!;
+            const walk = (node: PreviewNode): PreviewNode[] => [
+              node,
+              ...(node.children ?? []).flatMap(walk),
+            ];
+            const control = walk(host.rootElement).filter((node) => node.tagName === tag)[
+              index
+            ];
+            const editor = document.activeElement;
+            if (
+              !(
+                editor instanceof HTMLInputElement
+                || editor instanceof HTMLTextAreaElement
+              )
+            ) {
+              throw new Error(
+                'Pointer click did not focus a DOM editor: ' + tag + '[' + index + ']',
+              );
+            }
+            return {
+              cue: {
+                value: control.value,
+                focused: control.focused,
+                start: control.selectionStart,
+                end: control.selectionEnd,
+                direction: control.selectionDirection,
+              },
+              dom: {
+                cueEditor: editor.matches('[data-cue-editor]'),
+                value: editor.value,
+                start: editor.selectionStart,
+                end: editor.selectionEnd,
+                direction: editor.selectionDirection,
+              },
+            };
+          },
+          { tag, index },
+        );
         const context = tag + '[' + index + '] ' + action;
         selectionTrace.push({ context, ...state });
         // Chromium reports "forward" for a collapsed caret while Cue can use
@@ -155,12 +310,30 @@ try {
         selectionChecks.push({
           context,
           actual: {
-            cue: { ...state.cue, direction: direction === undefined ? undefined : state.cue.direction },
-            dom: { ...state.dom, direction: direction === undefined ? undefined : state.dom.direction },
+            cue: {
+              ...state.cue,
+              direction: direction === undefined ? undefined : state.cue.direction,
+            },
+            dom: {
+              ...state.dom,
+              direction: direction === undefined ? undefined : state.dom.direction,
+            },
           },
           expected: {
-            cue: { value, focused: true, start, end, direction },
-            dom: { cueEditor: true, value: text, start, end, direction },
+            cue: {
+              value,
+              focused: true,
+              start,
+              end,
+              direction,
+            },
+            dom: {
+              cueEditor: true,
+              value: text,
+              start,
+              end,
+              direction,
+            },
           },
         });
       };
@@ -191,14 +364,20 @@ try {
       await page.mouse.move(input.left + 3, input.y, { steps: 6 });
       await page.mouse.up();
       await recordSelection('drag from end to start', 0, text.length, 'backward');
-      await page.screenshot({ path: resolve(outputDirectory, tag + '-' + index + '-keyboard-selection.png') });
+      await page.screenshot({
+        path: resolve(outputDirectory, tag + '-' + index + '-keyboard-selection.png'),
+      });
     }
   }
   const selectionPath = resolve(outputDirectory, 'cue-input-selection.json');
   await writeFile(selectionPath, JSON.stringify(selectionTrace, undefined, 2) + '\n');
   console.log('Input selection evidence: ' + selectionPath);
   for (const { context, actual, expected } of selectionChecks) {
-    assert.deepEqual(actual, expected, context + ': Cue and DOM selections must match the native editing action');
+    assert.deepEqual(
+      actual,
+      expected,
+      context + ': Cue and DOM selections must match the native editing action',
+    );
   }
 
   await clickNative('Button Gallery');
@@ -269,7 +448,9 @@ try {
   assert.equal((await snapshot('cue-text-input')).nativeText, 'Native only');
   await clickNative('Remount controls');
   assert.deepEqual((await snapshot('cue-text-input')).values, ['Nova', 'Nova']);
-  assert.ok((await snapshot('cue-text-input')).text.includes('No user input events yet.'));
+  assert.ok(
+    (await snapshot('cue-text-input')).text.includes('No user input events yet.'),
+  );
 
   await clickNative('NumberInput Gallery');
   await focusControl('cue-number-input');
@@ -303,7 +484,9 @@ try {
   const select = await pointerBox('cue-select');
   await page.mouse.click(select.x, select.y);
   await page.waitForTimeout(100);
-  await page.screenshot({ path: resolve(outputDirectory, 'cue-select-pointer-open.png') });
+  await page.screenshot({
+    path: resolve(outputDirectory, 'cue-select-pointer-open.png'),
+  });
   const engineer = await pointerBox('cue-select', 0, 'Engineer');
   await page.mouse.click(engineer.x, engineer.y);
   await page.waitForTimeout(100);
@@ -314,56 +497,111 @@ try {
   await page.keyboard.type('X');
   await page.waitForTimeout(100);
   assert.deepEqual((await snapshot('cue-text-input')).values, ['XNova', 'Nova']);
-  await page.screenshot({ path: resolve(outputDirectory, 'cue-text-input-pointer-caret.png') });
+  await page.screenshot({
+    path: resolve(outputDirectory, 'cue-text-input-pointer-caret.png'),
+  });
 
   // Chromium touch input reaches the engine source; no Cue event is synthesized here.
   const cdp = await page.context().newCDPSession(page);
   await page.evaluate(() => {
-    const cc = (window as any).cc;
-    const host = cc.director.getScene().getChildByName('Cue Basic Document').getComponents(cc.Component)
-      .find((component: any) => component.rootElement);
-    const trace: unknown[] = [];
-    (window as any).__cueRealTouchTrace = trace;
-    host.rootElement.addEventListener('pointerdown', (event: any) => trace.push({
-      tag: event.target.tagName, pointerType: event.pointerType, pointerId: event.pointerId,
-    }), true);
+    const cc = window.cc;
+    const host = cc.director
+      .getScene()!
+      .getChildByName('Cue Basic Document')!
+      .getComponents(cc.Component)
+      .find((component): component is PreviewHost => 'rootElement' in component)!;
+    const trace: TouchTrace[] = [];
+    window.__cueRealTouchTrace = trace;
+    host.rootElement.addEventListener(
+      'pointerdown',
+      (event) =>
+        trace.push({
+          tag: event.target?.tagName,
+          pointerType: event.pointerType,
+          pointerId: event.pointerId,
+        }),
+      true,
+    );
   });
   await clickNative('Toggle Gallery');
   const touchToggle = await pointerBox('cue-toggle');
-  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await cdp.send('Emulation.setTouchEmulationEnabled', {
+    enabled: true,
+    maxTouchPoints: 5,
+  });
   await cdp.send('Input.dispatchTouchEvent', {
-    type: 'touchStart', touchPoints: [{ x: touchToggle.x, y: touchToggle.y, id: 7 }],
+    type: 'touchStart',
+    touchPoints: [
+      {
+        x: touchToggle.x,
+        y: touchToggle.y,
+        id: 7,
+      },
+    ],
   });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await page.waitForTimeout(150);
   assert.deepEqual((await snapshot('cue-toggle')).values, [true, false]);
-  assert.ok(await page.evaluate(() => (window as any).__cueRealTouchTrace.some(
-    (event: any) => event.tag === 'cue-toggle' && event.pointerType === 'touch',
-  )), 'Toggle must receive a real touch pointer, not a synthesized mouse click');
+  assert.ok(
+    await page.evaluate(() =>
+      window.__cueRealTouchTrace.some(
+        (event) => event.tag === 'cue-toggle' && event.pointerType === 'touch',
+      ),
+    ),
+    'Toggle must receive a real touch pointer, not a synthesized mouse click',
+  );
   await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await clickNative('Slider Gallery');
   const touchSlider = await pointerBox('cue-slider');
-  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
-  await cdp.send('Input.dispatchTouchEvent', {
-    type: 'touchStart', touchPoints: [{ x: touchSlider.x, y: touchSlider.y, id: 8 }],
+  await cdp.send('Emulation.setTouchEmulationEnabled', {
+    enabled: true,
+    maxTouchPoints: 5,
   });
   await cdp.send('Input.dispatchTouchEvent', {
-    type: 'touchMove', touchPoints: [{ x: touchSlider.left + touchSlider.width + 120, y: touchSlider.y, id: 8 }],
+    type: 'touchStart',
+    touchPoints: [
+      {
+        x: touchSlider.x,
+        y: touchSlider.y,
+        id: 8,
+      },
+    ],
+  });
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchMove',
+    touchPoints: [
+      {
+        x: touchSlider.left + touchSlider.width + 120,
+        y: touchSlider.y,
+        id: 8,
+      },
+    ],
   });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await page.waitForTimeout(150);
   assert.deepEqual((await snapshot('cue-slider')).values, [100, 25]);
-  assert.ok(await page.evaluate(() => (window as any).__cueRealTouchTrace.some(
-    (event: any) => event.tag === 'cue-slider' && event.pointerType === 'touch',
-  )), 'Slider must receive a real touch pointer');
+  assert.ok(
+    await page.evaluate(() =>
+      window.__cueRealTouchTrace.some(
+        (event) => event.tag === 'cue-slider' && event.pointerType === 'touch',
+      ),
+    ),
+    'Slider must receive a real touch pointer',
+  );
   assert.ok((await snapshot('cue-slider')).text.includes('default change: 100'));
-  await page.screenshot({ path: resolve(outputDirectory, 'cue-slider-touch-capture.png') });
+  await page.screenshot({
+    path: resolve(outputDirectory, 'cue-slider-touch-capture.png'),
+  });
   await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await cdp.detach();
 
   for (const [label, tag] of [
-    ['Button', 'cue-button'], ['Toggle', 'cue-toggle'], ['Slider', 'cue-slider'],
-    ['Select', 'cue-select'], ['TextInput', 'cue-text-input'], ['NumberInput', 'cue-number-input'],
+    ['Button', 'cue-button'],
+    ['Toggle', 'cue-toggle'],
+    ['Slider', 'cue-slider'],
+    ['Select', 'cue-select'],
+    ['TextInput', 'cue-text-input'],
+    ['NumberInput', 'cue-number-input'],
   ]) {
     await clickNative(label + ' Gallery');
     await clickNative('disabled: false');
@@ -373,7 +611,11 @@ try {
     await page.screenshot({ path: resolve(outputDirectory, tag + '-gallery.png') });
   }
   assert.equal(errors.length, 0, errors.join('\n'));
-  console.log('PASS: six galleries, keyboard, mouse/touch clicks/capture, text/number pointer caret and arrow selection, lazy commit, Cocos editor coexistence, external writes and remount');
+  console.log(
+    ('PASS: six galleries, keyboard, mouse/touch clicks/capture, '
+      + 'text/number pointer caret and arrow selection, lazy commit, '
+      + 'Cocos editor coexistence, external writes and remount'),
+  );
   console.log('Still required: a real operating-system IME composition session.');
 } catch (error) {
   const page = browser.contexts()[0]?.pages()[0];
@@ -382,7 +624,9 @@ try {
     await page.screenshot({ path: failurePath });
     console.error('Failure screenshot: ' + failurePath);
   }
-  if (errors.length) console.error(errors.join('\n'));
+  if (errors.length) {
+    console.error(errors.join('\n'));
+  }
   throw error;
 } finally {
   await browser.close();

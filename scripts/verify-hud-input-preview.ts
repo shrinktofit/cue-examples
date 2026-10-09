@@ -1,3 +1,4 @@
+import type { PreviewNode, PreviewHost, PreviewComponent } from './preview-types.ts';
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
 import { preparePreviewVerification } from './preview-verification.ts';
@@ -10,29 +11,45 @@ const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 850 } });
   const errors: string[] = [];
-  page.on('console', (e: { type(): string; text(): string }) => { if (e.type() === 'error') errors.push(e.text()); });
+  page.on('console', (e: { type(): string; text(): string }) => {
+    if (e.type() === 'error') {
+      errors.push(e.text());
+    }
+  });
   page.on('pageerror', (e: Error) => errors.push(e.stack ?? e.message));
   await page.goto(targetUrl, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForFunction(() => {
-    const cc = (window as any).cc;
-    return cc?.director.getScene()?.getChildByName('Showcase Document')?.getComponents(cc.Component).some((c: any) => c.rootElement?.children.length);
+    const cc = window.cc;
+    return cc?.director
+      .getScene()
+      ?.getChildByName('Showcase Document')
+      ?.getComponents(cc.Component)
+      .some((c: PreviewComponent) => c.rootElement?.children.length);
   });
   await page.waitForTimeout(500);
-  const state = async (): Promise<{ texts: string[]; sliders: number[] }> => page.evaluate(() => {
-    const cc = (window as any).cc;
-    const scene = cc.director.getScene();
-    const host = scene.getChildByName('Showcase Document').getComponents(cc.Component).find((c: any) => c.rootElement);
-    const walk = (n: any): any[] => [n, ...(n.children ?? []).flatMap(walk)];
-    const texts = walk(host.rootElement).filter(n => typeof n.data === 'string').map(n => n.data);
-    // The experience control is a real Cue slider now, so read its public value
-    // instead of a Cocos Slider progress.
-    const slider = walk(host.rootElement).find(n => n.tagName === 'cue-slider');
-    return { texts, sliders: slider ? [slider.value] : [] };
-  });
+  const state = async (): Promise<{ texts: string[]; sliders: number[] }> =>
+    page.evaluate(() => {
+      const cc = window.cc;
+      const scene = cc.director.getScene()!;
+      const host = scene
+        .getChildByName('Showcase Document')!
+        .getComponents(cc.Component)
+        .find((component): component is PreviewHost => 'rootElement' in component)!;
+      const walk = (n: PreviewNode): PreviewNode[] => [
+        n,
+        ...(n.children ?? []).flatMap(walk),
+      ];
+      const texts = walk(host.rootElement)
+        .flatMap((n) => typeof n.data === 'string' ? [n.data] : []);
+      // The experience control is a real Cue slider now, so read its public value
+      // instead of a Cocos Slider progress.
+      const slider = walk(host.rootElement).find((n) => n.tagName === 'cue-slider')!;
+      return { texts, sliders: slider ? [slider.value as number] : [] };
+    });
   await page.screenshot({ path: resolve(outputDirectory, 'cue-hud-input-initial.png') });
   await page.mouse.click(180, 440);
   await page.waitForTimeout(150);
-  assert.ok((await state()).texts.some(text => text.includes('· Level')));
+  assert.ok((await state()).texts.some((text) => text.includes('· Level')));
   await page.mouse.move(350, 470);
   await page.mouse.down();
   await page.mouse.move(500, 470, { steps: 5 });
@@ -40,7 +57,11 @@ try {
   await page.waitForTimeout(150);
   assert.ok((await state()).texts.includes('1078/1617'));
   assert.ok((await state()).texts.includes('Experience 1078 / 1617'));
-  assert.equal((await state()).sliders[0], 1078, 'the Cue slider must carry the dragged experience');
+  assert.equal(
+    (await state()).sliders[0],
+    1078,
+    'the Cue slider must carry the dragged experience',
+  );
   await page.mouse.move(350, 470);
   await page.mouse.down();
   await page.mouse.move(360, 470);
@@ -50,17 +71,28 @@ try {
   const cancelled = await state();
   await page.mouse.move(700, 470);
   await page.waitForTimeout(150);
-  assert.deepEqual(await state(), cancelled, 'Blur must end HUD drag, including public releasePointerCapture from cancellation handler');
+  assert.deepEqual(
+    await state(),
+    cancelled,
+    'Blur must end HUD drag, including public releasePointerCapture from cancellation handler',
+  );
   await page.mouse.move(350, 470);
   await page.mouse.down();
   await page.mouse.move(500, 470);
   await page.mouse.up();
   await page.waitForTimeout(150);
   assert.ok((await state()).texts.includes('1078/1617'));
-  assert.equal((await state()).sliders[0], 1078, 'the Cue slider must carry the dragged experience');
+  assert.equal(
+    (await state()).sliders[0],
+    1078,
+    'the Cue slider must carry the dragged experience',
+  );
   await page.screenshot({ path: resolve(outputDirectory, 'cue-hud-input-verified.png') });
   assert.equal(errors.length, 0, errors.join('\n'));
-  console.log('PASS: avatar details, captured meter drag, reactive values/native slider, blur cleanup and new drag');
+  console.log(
+    ('PASS: avatar details, captured meter drag, reactive '
+      + 'values/native slider, blur cleanup and new drag'),
+  );
 } finally {
   await browser.close();
 }

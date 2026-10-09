@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { Length, ref, shallowRef, watchEffect, type CueElement, type CuePointerEvent } from '@bsgames/cue';
+import {
+  Length,
+  ref,
+  shallowRef,
+  watchEffect,
+  type CueElement,
+  type CuePointerEvent,
+} from '@bsgames/cue';
 
 const props = defineProps<{
   playerName: string;
@@ -22,24 +29,35 @@ const levelValue = shallowRef<CueElement>();
 const playerNameLabel = shallowRef<CueElement>();
 
 function updateExperience(event: CuePointerEvent): void {
-  const ratio = Math.max(0, Math.min(1, event.offsetX / event.currentTarget!.clientWidth));
+  const ratio = Math.max(
+    0,
+    Math.min(1, event.offsetX / event.currentTarget!.clientWidth),
+  );
   emit('update:experience', Math.round(ratio * props.experienceMax));
 }
 
 function beginExperienceDrag(event: CuePointerEvent): void {
-  if (!event.isPrimary || event.button !== 0) return;
+  if (!event.isPrimary || event.button !== 0) {
+    return;
+  }
   experiencePointer.value = event.pointerId;
   event.currentTarget!.setPointerCapture(event.pointerId);
   updateExperience(event);
 }
 
 function moveExperienceDrag(event: CuePointerEvent): void {
-  if (experiencePointer.value === event.pointerId) updateExperience(event);
+  if (experiencePointer.value === event.pointerId) {
+    updateExperience(event);
+  }
 }
 
 function endExperienceDrag(event: CuePointerEvent): void {
-  if (experiencePointer.value !== event.pointerId) return;
-  if (event.type === 'pointerup') updateExperience(event);
+  if (experiencePointer.value !== event.pointerId) {
+    return;
+  }
+  if (event.type === 'pointerup') {
+    updateExperience(event);
+  }
   experiencePointer.value = undefined;
   event.currentTarget!.releasePointerCapture(event.pointerId);
 }
@@ -68,7 +86,10 @@ watchEffect(() => {
     <div class="stage-caption">PLAYER PROFILE</div>
     <div class="stage-description">A lobby HUD composed from Cue elements</div>
     <div class="hud-frame">
-      <div ref="profile" class="player-profile">
+      <div
+        ref="profile"
+        class="player-profile"
+      >
         <cue-image
           :class="['player-avatar', { 'avatar-highlight': showDetails || avatarHovered }]"
           src="../../../assets/player-profile/default-avatar.png"
@@ -77,7 +98,10 @@ watchEffect(() => {
           @pointerleave="avatarHovered = false"
         />
         <div class="player-details">
-          <div ref="playerNameLabel" class="player-name">
+          <div
+            ref="playerNameLabel"
+            class="player-name"
+          >
             {{ playerName }}
           </div>
           <div
@@ -88,18 +112,33 @@ watchEffect(() => {
             @pointercancel="endExperienceDrag"
             @lostpointercapture="experiencePointer = undefined"
           >
-            <div ref="experienceFill" class="experience-fill" />
-            <div ref="experienceValue" class="experience-value">
+            <div
+              ref="experienceFill"
+              class="experience-fill"
+            />
+            <div
+              ref="experienceValue"
+              class="experience-value"
+            >
               {{ experience }}/{{ experienceMax }}
             </div>
           </div>
         </div>
         <div class="level-marker">
-          <cue-image class="level-badge" src="../../../assets/player-profile/level-background.png" />
-          <div ref="levelValue" class="level-value">{{ level }}</div>
+          <cue-image
+            class="level-badge"
+            src="../../../assets/player-profile/level-background.png"
+          />
+          <div
+            ref="levelValue"
+            class="level-value"
+          >{{ level }}</div>
         </div>
       </div>
-      <div v-if="showDetails" class="profile-details">
+      <div
+        v-if="showDetails"
+        class="profile-details"
+      >
         <div class="profile-detail-title">{{ playerName }} · Level {{ level }}</div>
         <div class="profile-detail-value">Experience {{ experience }} / {{ experienceMax }}</div>
       </div>
@@ -213,7 +252,7 @@ watchEffect(() => {
 }
 .player-name {
   padding-left: 28px;
-  font-family: "Microsoft YaHei UI", sans-serif;
+  font-family: 'Microsoft YaHei UI', sans-serif;
   font-size: 24px;
   font-weight: bold;
   line-height: normal;
@@ -228,7 +267,10 @@ watchEffect(() => {
   flex-shrink: 0;
   z-index: 1;
 }
-.avatar-highlight { outline: 2px solid #b7ff00; outline-offset: 2px; }
+.avatar-highlight {
+  outline: 2px solid #b7ff00;
+  outline-offset: 2px;
+}
 .profile-details {
   display: flex;
   flex-direction: column;
@@ -240,8 +282,14 @@ watchEffect(() => {
   border-radius: 10px;
   background-color: #111c2b;
 }
-.profile-detail-title { font-size: 14px; color: #e2e8f0; }
-.profile-detail-value { font-size: 12px; color: #b2c0d2; }
+.profile-detail-title {
+  font-size: 14px;
+  color: #e2e8f0;
+}
+.profile-detail-value {
+  font-size: 12px;
+  color: #b2c0d2;
+}
 .stage-note {
   font-size: 14px;
   color: #94a3b8;

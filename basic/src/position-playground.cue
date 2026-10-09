@@ -59,14 +59,36 @@ defineProps<{ positionClasses: readonly string[] }>();
   line-height: 94px;
   text-align: center;
 }
-.position-static { position: static; }
-.position-relative { position: relative; }
-.position-absolute { position: absolute; }
-.anchor-top-left { top: 30px; left: 30px; }
-.anchor-bottom-right { bottom: 20px; right: 20px; }
-.anchor-percent { top: 25%; left: 50%; }
-.anchor-stretch { inset: 30px 24px; width: auto; height: auto; }
-.anchor-negative { top: -12px; left: -12px; }
+.position-static {
+  position: static;
+}
+.position-relative {
+  position: relative;
+}
+.position-absolute {
+  position: absolute;
+}
+.anchor-top-left {
+  top: 30px;
+  left: 30px;
+}
+.anchor-bottom-right {
+  bottom: 20px;
+  right: 20px;
+}
+.anchor-percent {
+  top: 25%;
+  left: 50%;
+}
+.anchor-stretch {
+  inset: 30px 24px;
+  width: auto;
+  height: auto;
+}
+.anchor-negative {
+  top: -12px;
+  left: -12px;
+}
 .position-note {
   color: #cbd5e1;
   font-size: 12px;

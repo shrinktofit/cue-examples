@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { ref, shallowRef, watchEffect, type CueElement, type CuePointerEvent } from '@bsgames/cue';
+import {
+  ref,
+  shallowRef,
+  watchEffect,
+  type CueElement,
+  type CuePointerEvent,
+} from '@bsgames/cue';
 
 const props = defineProps<{
   mode: string;
@@ -30,7 +36,9 @@ function recordOnce(): void {
 }
 
 function beginDrag(event: CuePointerEvent): void {
-  if (!event.isPrimary || event.button !== 0) return;
+  if (!event.isPrimary || event.button !== 0) {
+    return;
+  }
   dragPointer.value = event.pointerId;
   dragPosition.value = { x: event.offsetX, y: event.offsetY };
   if (props.capture) {
@@ -40,13 +48,17 @@ function beginDrag(event: CuePointerEvent): void {
 }
 
 function moveDrag(event: CuePointerEvent): void {
-  if (dragPointer.value !== event.pointerId) return;
+  if (dragPointer.value !== event.pointerId) {
+    return;
+  }
   dragPosition.value = { x: event.offsetX, y: event.offsetY };
   dragStatus.value = `Pointer ${event.pointerId}: ${Math.round(event.offsetX)}, ${Math.round(event.offsetY)}`;
 }
 
 function endDrag(event: CuePointerEvent): void {
-  if (dragPointer.value !== event.pointerId) return;
+  if (dragPointer.value !== event.pointerId) {
+    return;
+  }
   dragPointer.value = undefined;
   if (event.currentTarget!.hasPointerCapture(event.pointerId)) {
     event.currentTarget!.releasePointerCapture(event.pointerId);
@@ -55,7 +67,10 @@ function endDrag(event: CuePointerEvent): void {
 }
 
 function leaveDragPad(event: CuePointerEvent): void {
-  if (dragPointer.value === event.pointerId && !event.currentTarget!.hasPointerCapture(event.pointerId)) {
+  if (
+    dragPointer.value === event.pointerId
+    && !event.currentTarget!.hasPointerCapture(event.pointerId)
+  ) {
     dragPointer.value = undefined;
     dragStatus.value = 'Left pad without capture';
   }
@@ -77,7 +92,10 @@ watchEffect(() => {
 <template>
   <div class="input-shell">
     <div class="input-title">Input Gallery</div>
-    <div v-if="mode === 'click'" class="input-example">
+    <div
+      v-if="mode === 'click'"
+      class="input-example"
+    >
       <div class="input-note">Click and hover this Cue element.</div>
       <div
         :class="['click-button', { hovered }]"
@@ -89,7 +107,10 @@ watchEffect(() => {
       <div class="input-note">The counter and hover state belong to the Cue component.</div>
     </div>
 
-    <div v-else-if="mode === 'propagation'" class="input-example">
+    <div
+      v-else-if="mode === 'propagation'"
+      class="input-example"
+    >
       <div class="input-note">Click the inner button; read capture, target, then bubble.</div>
       <div
         class="event-parent"
@@ -98,15 +119,31 @@ watchEffect(() => {
       >
         <div class="input-note">Parent</div>
         <div class="event-buttons">
-          <div v-if="stopPropagation" class="event-button" @click.stop="recordEvent('target: stopped')">Inner .stop</div>
-          <div v-else class="event-button" @click="recordEvent('target: inner')">Inner bubble</div>
-          <div class="event-button once-button" @click.once="recordOnce">Once: {{ onceClicks }}</div>
+          <div
+            v-if="stopPropagation"
+            class="event-button"
+            @click.stop="recordEvent('target: stopped')"
+          >Inner .stop</div>
+          <div
+            v-else
+            class="event-button"
+            @click="recordEvent('target: inner')"
+          >Inner bubble</div>
+          <div
+            class="event-button once-button"
+            @click.once="recordOnce"
+          >Once: {{ onceClicks }}</div>
         </div>
       </div>
-      <div class="event-log">{{ log.length ? log.join('\n') : 'Click a button to record its event path.' }}</div>
+      <div class="event-log">{{
+        log.length ? log.join('\n') : 'Click a button to record its event path.'
+      }}</div>
     </div>
 
-    <div v-else-if="mode === 'drag'" class="input-example">
+    <div
+      v-else-if="mode === 'drag'"
+      class="input-example"
+    >
       <div class="input-note">Hold inside the pad and move outside. Try capture off/on.</div>
       <div
         class="drag-pad"
@@ -119,18 +156,30 @@ watchEffect(() => {
         @lostpointercapture="loseCapture"
       >
         <div class="drag-instruction">Drag beyond this border</div>
-        <div ref="puck" class="drag-puck">+</div>
+        <div
+          ref="puck"
+          class="drag-puck"
+        >+</div>
       </div>
       <div class="input-value">{{ dragStatus }}</div>
       <div class="event-log">{{ log.join('\n') }}</div>
     </div>
 
-    <div v-else class="input-example">
+    <div
+      v-else
+      class="input-example"
+    >
       <div class="input-note">Click overlapping shapes and the part outside the clipped frame.</div>
       <div :class="['hit-frame', { 'clip-visible': !clipped }]">
-        <div class="back-target" @click="backClicks++">Back: {{ backClicks }}</div>
         <div
-          :class="['front-target', { 'pass-through': frontPointerEvents === 'none', transformed }]"
+          class="back-target"
+          @click="backClicks++"
+        >Back: {{ backClicks }}</div>
+        <div
+          :class="[
+            'front-target',
+            { 'pass-through': frontPointerEvents === 'none', transformed },
+          ]"
           @click="frontClicks++"
         >Front: {{ frontClicks }}</div>
       </div>
@@ -156,10 +205,23 @@ watchEffect(() => {
   font-family: sans-serif;
   font-size: 12px;
 }
-.input-title { font-size: 22px; font-weight: bold; }
-.input-example { display: flex; flex-direction: column; gap: 12px; }
-.input-note { font-size: 11px; color: #94a3b8; }
-.input-value { font-size: 14px; color: #bae6fd; }
+.input-title {
+  font-size: 22px;
+  font-weight: bold;
+}
+.input-example {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.input-note {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.input-value {
+  font-size: 14px;
+  color: #bae6fd;
+}
 .click-button {
   padding: 28px;
   border: 2px solid #38bdf8;
@@ -168,7 +230,10 @@ watchEffect(() => {
   font-size: 24px;
   text-align: center;
 }
-.hovered { background-color: #0284c7; border-color: #f8fafc; }
+.hovered {
+  background-color: #0284c7;
+  border-color: #f8fafc;
+}
 .event-parent {
   display: flex;
   flex-direction: column;
@@ -178,10 +243,27 @@ watchEffect(() => {
   border-radius: 12px;
   background-color: #1e293b;
 }
-.event-buttons { display: flex; gap: 12px; }
-.event-button { flex: 1; padding: 16px 10px; border-radius: 8px; background-color: #0369a1; text-align: center; }
-.once-button { background-color: #6d28d9; }
-.event-log { font-family: monospace; font-size: 11px; line-height: 17px; white-space: pre-line; color: #a7f3d0; }
+.event-buttons {
+  display: flex;
+  gap: 12px;
+}
+.event-button {
+  flex: 1;
+  padding: 16px 10px;
+  border-radius: 8px;
+  background-color: #0369a1;
+  text-align: center;
+}
+.once-button {
+  background-color: #6d28d9;
+}
+.event-log {
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 17px;
+  white-space: pre-line;
+  color: #a7f3d0;
+}
 .drag-pad {
   position: relative;
   box-sizing: border-box;
@@ -191,7 +273,12 @@ watchEffect(() => {
   border-radius: 12px;
   background-color: #0c4a6e;
 }
-.drag-instruction { display: block; padding: 10px; pointer-events: none; color: #bae6fd; }
+.drag-instruction {
+  display: block;
+  padding: 10px;
+  pointer-events: none;
+  color: #bae6fd;
+}
 .drag-puck {
   position: absolute;
   width: 44px;
@@ -214,7 +301,9 @@ watchEffect(() => {
   background-color: #1e293b;
   overflow: hidden;
 }
-.clip-visible { overflow: visible; }
+.clip-visible {
+  overflow: visible;
+}
 .back-target {
   position: absolute;
   left: 32px;
@@ -238,6 +327,10 @@ watchEffect(() => {
   line-height: 122px;
   text-align: center;
 }
-.transformed { transform: rotate(18deg); }
-.pass-through { pointer-events: none; }
+.transformed {
+  transform: rotate(18deg);
+}
+.pass-through {
+  pointer-events: none;
+}
 </style>

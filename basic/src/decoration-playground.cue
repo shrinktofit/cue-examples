@@ -8,10 +8,16 @@ defineProps<{
   <div class="decoration-shell">
     <div class="decoration-stage">
       <div :class="['decoration-box', decorationClasses]">
-        <div :class="['decoration-label', {
-          'overflow-probe': decorationClasses.includes('overflow-visible')
-            || decorationClasses.includes('overflow-hidden'),
-        }]">
+        <div
+          :class="[
+            'decoration-label',
+            {
+              'overflow-probe':
+                decorationClasses.includes('overflow-visible') ||
+                decorationClasses.includes('overflow-hidden'),
+            },
+          ]"
+        >
           Box decoration
         </div>
       </div>
@@ -146,7 +152,7 @@ defineProps<{
 
 .background-texture {
   background-color: #0f172a;
-  background-image: url("../assets/image-gallery/settings-icon.png");
+  background-image: url('../assets/image-gallery/settings-icon.png');
 }
 
 .background-gradient {

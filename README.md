@@ -54,4 +54,25 @@ Saved browser regressions exercise the running projects through actual mouse/tou
 [`scripts/verify-hotbar-preview.ts`](scripts/verify-hotbar-preview.ts) checks the item hotbar through mouse,
 keyboard and rendered cooldown pixels.
 Each requires a Preview URL and an explicit existing Playwright installation path. Commands and
-screenshot output are documented in the respective project READMEs; no browser dependency is added here.
+screenshot output are documented in the respective project READMEs. The development dependency
+on `playwright-core` supplies types; the scripts still load the explicit installation and do not
+download browsers during setup.
+
+## Code checks
+
+Build the sibling Cue packages and install this workspace's dependencies before running:
+
+```text
+pnpm lint
+pnpm test:lint
+pnpm exec tsc -p tsconfig.eslint.json
+```
+
+The lint configuration covers TypeScript, JavaScript and `.cue` scripts and templates. It uses a
+standalone TypeScript configuration so these checks do not require Creator's generated `temp`
+files. Generated project outputs and installed editor extensions are excluded.
+
+The Cue processor gives SFCs a virtual `.vue` filename for Vue's parser and rules, while resolving
+their scripts against the original `.cue` files for type-aware checks. Template text whitespace
+is preserved because Cue renders it literally; content-newline rules therefore do not apply to
+`.cue` templates. `test:lint` verifies script rules, typed promise checks and autofix source offsets.

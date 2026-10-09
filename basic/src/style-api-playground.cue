@@ -2,9 +2,24 @@
 import { Length, shallowRef, watchEffect, type CueElement } from '@bsgames/cue';
 
 const colors = {
-  sky: { red: 56, green: 189, blue: 248, alpha: 1 },
-  green: { red: 52, green: 211, blue: 153, alpha: 1 },
-  amber: { red: 251, green: 191, blue: 36, alpha: 1 },
+  sky: {
+    red: 56,
+    green: 189,
+    blue: 248,
+    alpha: 1,
+  },
+  green: {
+    red: 52,
+    green: 211,
+    blue: 153,
+    alpha: 1,
+  },
+  amber: {
+    red: 251,
+    green: 191,
+    blue: 36,
+    alpha: 1,
+  },
 };
 const props = defineProps<{
   applied: boolean;
@@ -31,8 +46,16 @@ watchEffect(() => {
         :class="['style-fill', { 'important-width': important }]"
       />
     </div>
-    <div class="style-value">{{ applied ? 'Width override: ' + width + '%' : 'Overrides cleared' }}</div>
-    <div class="style-note">{{ important ? 'The stylesheet forces width: 75% !important.' : applied ? 'The API overrides the stylesheet width: 20%.' : 'The stylesheet restores width: 20% and sky color.' }}</div>
+    <div class="style-value">{{
+      applied ? 'Width override: ' + width + '%' : 'Overrides cleared'
+    }}</div>
+    <div class="style-note">{{
+      important
+        ? 'The stylesheet forces width: 75% !important.'
+        : applied
+          ? 'The API overrides the stylesheet width: 20%.'
+          : 'The stylesheet restores width: 20% and sky color.'
+    }}</div>
     <div class="style-note">Assign undefined to remove a style override.</div>
   </div>
 </template>
@@ -53,7 +76,9 @@ watchEffect(() => {
   color: #e2e8f0;
   font-size: 14px;
 }
-.style-caption { font-size: 24px; }
+.style-caption {
+  font-size: 24px;
+}
 .style-track {
   width: 428px;
   height: 54px;
@@ -67,7 +92,14 @@ watchEffect(() => {
   background-color: #38bdf8;
   border-radius: 10px;
 }
-.important-width { width: 75% !important; }
-.style-value { font-size: 20px; }
-.style-note { color: #94a3b8; font-size: 12px; }
+.important-width {
+  width: 75% !important;
+}
+.style-value {
+  font-size: 20px;
+}
+.style-note {
+  color: #94a3b8;
+  font-size: 12px;
+}
 </style>

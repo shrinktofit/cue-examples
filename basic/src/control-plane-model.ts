@@ -6,19 +6,19 @@
  * (`app.cue`) receives these tables as props and owns only the selected values.
  */
 
-export type ControlScope =
-  | 'container'
-  | 'control'
-  | 'decoration'
-  | 'featured-item'
-  | 'image'
-  | 'image-source'
-  | 'input'
-  | 'position'
-  | 'style-api'
-  | 'text'
-  | 'text-content'
-  | 'text-font';
+export type ControlScope
+  = | 'container'
+    | 'control'
+    | 'decoration'
+    | 'featured-item'
+    | 'image'
+    | 'image-source'
+    | 'input'
+    | 'position'
+    | 'style-api'
+    | 'text'
+    | 'text-content'
+    | 'text-font';
 
 export type ControlPresentation = 'inline' | 'menu';
 
@@ -219,7 +219,8 @@ const textControlSpecs: readonly ControlSpec[] = [
       { label: 'anonymous flex text', value: 'inline-flex-text' },
       {
         label: 'mixed wrapping',
-        value: 'Cue wraps English words and 中文文本。\nSource line break    with spaces.',
+        value:
+          'Cue wraps English words and 中文文本。\nSource line break    with spaces.',
       },
       {
         label: 'preserved whitespace',
@@ -234,7 +235,10 @@ const textControlSpecs: readonly ControlSpec[] = [
         value: 'supercalifragilisticexpialidocious remains one unbroken word',
       },
       { label: 'nowrap game label', value: 'Commander Alexandra · Level 128' },
-      { label: 'consistent multiline fit', value: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\nShort line\nBoth lines keep one font scale' },
+      {
+        label: 'consistent multiline fit',
+        value: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\nShort line\nBoth lines keep one font scale',
+      },
       { label: 'grapheme clusters', value: 'CaféCaféCaféCafé 👩‍👩‍👧‍👦👩‍👩‍👧‍👦👩‍👩‍👧‍👦' },
     ],
   },
@@ -511,31 +515,46 @@ const inputControlSpecs: readonly ControlSpec[] = [
     property: 'pointer capture',
     presentation: 'inline',
     scope: 'input',
-    options: [{ label: 'on', value: 'on' }, { label: 'off', value: 'off' }],
+    options: [
+      { label: 'on', value: 'on' },
+      { label: 'off', value: 'off' },
+    ],
   },
   {
     property: 'propagation',
     presentation: 'inline',
     scope: 'input',
-    options: [{ label: 'bubble', value: 'bubble' }, { label: '.stop', value: 'stop' }],
+    options: [
+      { label: 'bubble', value: 'bubble' },
+      { label: '.stop', value: 'stop' },
+    ],
   },
   {
     property: 'front pointer-events',
     presentation: 'inline',
     scope: 'input',
-    options: [{ label: 'auto', value: 'auto' }, { label: 'none', value: 'none' }],
+    options: [
+      { label: 'auto', value: 'auto' },
+      { label: 'none', value: 'none' },
+    ],
   },
   {
     property: 'overflow',
     presentation: 'inline',
     scope: 'input',
-    options: [{ label: 'hidden', value: 'hidden' }, { label: 'visible', value: 'visible' }],
+    options: [
+      { label: 'hidden', value: 'hidden' },
+      { label: 'visible', value: 'visible' },
+    ],
   },
   {
     property: 'transform',
     presentation: 'inline',
     scope: 'input',
-    options: [{ label: 'rotate(18deg)', value: 'rotated' }, { label: 'none', value: 'none' }],
+    options: [
+      { label: 'rotate(18deg)', value: 'rotated' },
+      { label: 'none', value: 'none' },
+    ],
   },
 ];
 
@@ -637,19 +656,19 @@ const decorationControlSpecs: readonly ControlSpec[] = [
 
 /** Per-gallery `mode` options of the six built-in control galleries. */
 export const BUILTIN_MODES: Readonly<Record<string, readonly ControlOption[]>> = {
-  button: [
+  'button': [
     { label: 'short', value: 'short' },
     { label: 'long label', value: 'long' },
   ],
-  toggle: [
+  'toggle': [
     { label: 'short', value: 'short' },
     { label: 'long label', value: 'long' },
   ],
-  slider: [
+  'slider': [
     { label: 'horizontal', value: 'horizontal' },
     { label: 'vertical', value: 'vertical' },
   ],
-  select: [
+  'select': [
     { label: 'all roles', value: 'all' },
     { label: 'restricted', value: 'restricted' },
   ],
@@ -676,7 +695,10 @@ export function createBuiltinPanelControls(galleryId: string): readonly ControlS
       property: 'disabled',
       presentation: 'inline',
       scope: 'control',
-      options: [{ label: 'false', value: 'off' }, { label: 'true', value: 'on' }],
+      options: [
+        { label: 'false', value: 'off' },
+        { label: 'true', value: 'on' },
+      ],
     },
     {
       property: 'external value',
@@ -688,12 +710,20 @@ export function createBuiltinPanelControls(galleryId: string): readonly ControlS
         { label: 'empty / zero', value: 'empty' },
       ],
     },
-    { property: 'mode', presentation: 'menu', scope: 'control', options: modes },
+    {
+      property: 'mode',
+      presentation: 'menu',
+      scope: 'control',
+      options: modes,
+    },
     {
       property: 'custom width',
       presentation: 'inline',
       scope: 'control',
-      options: [{ label: '280 px', value: '280' }, { label: '200 px', value: '200' }],
+      options: [
+        { label: '280 px', value: '280' },
+        { label: '200 px', value: '200' },
+      ],
     },
   ];
 }
@@ -708,10 +738,10 @@ const builtinPanelIds = [
 ] as const;
 
 const builtinPanelLabels: Readonly<Record<string, string>> = {
-  button: 'Button',
-  toggle: 'Toggle',
-  slider: 'Slider',
-  select: 'Select',
+  'button': 'Button',
+  'toggle': 'Toggle',
+  'slider': 'Slider',
+  'select': 'Select',
   'text-input': 'TextInput',
   'number-input': 'NumberInput',
 };
@@ -763,7 +793,8 @@ export const PANELS: readonly PanelSpec[] = [
     label: 'Image',
     group: 'base',
     title: 'Image Playground',
-    subtitle: 'One cue-image + source, box size and object-fit; gray shows the content box',
+    subtitle:
+      'One cue-image + source, box size and object-fit; gray shows the content box',
     kind: 'stage',
     controls: imageControlSpecs,
   },

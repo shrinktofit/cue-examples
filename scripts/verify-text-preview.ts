@@ -1,9 +1,14 @@
+import type { PreviewNode, PreviewHost } from './preview-types.ts';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
-import { createControlPlaneClicker, preparePreviewVerification } from './preview-verification.ts';
+import {
+  createControlPlaneClicker,
+  preparePreviewVerification,
+} from './preview-verification.ts';
 
 const { chromium, outputDirectory, targetUrl } = await preparePreviewVerification(
-  '063f3c76-b538-413c-bdbe-fe65821e9be5', 'basic',
+  '063f3c76-b538-413c-bdbe-fe65821e9be5',
+  'basic',
 );
 const browser = await chromium.launch({ headless: true });
 try {
@@ -11,14 +16,24 @@ try {
   const errors: string[] = [];
   page.on('pageerror', (error: Error) => errors.push(error.message));
   await page.goto(targetUrl, { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => (window as any).cc?.director.getScene()?.getChildByName('Cue Basic Document'));
+  await page.waitForFunction(() =>
+    window.cc?.director.getScene()?.getChildByName('Cue Basic Document'),
+  );
   const clickNative = createControlPlaneClicker(page, 'Cue Basic Document').click;
-  const textContent = async (): Promise<string> => page.evaluate(() => {
-    const cc = (window as any).cc;
-    const host = cc.director.getScene().getChildByName('Cue Basic Document').getComponents(cc.Component).find((item: any) => item.rootElement);
-    const text = (node: any): string => typeof node.data === 'string' ? node.data : (node.children ?? []).map(text).join('');
-    return text(host.rootElement);
-  });
+  const textContent = async (): Promise<string> =>
+    page.evaluate(() => {
+      const cc = window.cc;
+      const host = cc.director
+        .getScene()!
+        .getChildByName('Cue Basic Document')!
+        .getComponents(cc.Component)
+        .find((component): component is PreviewHost => 'rootElement' in component)!;
+      const text = (node: PreviewNode): string =>
+        typeof node.data === 'string'
+          ? node.data
+          : (node.children ?? []).map(text).join('');
+      return text(host.rootElement);
+    });
 
   /// @case Actual Cocos navigation switches between each inline text sample.
   /// @expect Every sample mounts, responds to combined controls, and renders without a page error.
@@ -36,11 +51,23 @@ try {
     await clickNative('sample');
     await clickNative('sample: ' + label);
     assert.ok((await textContent()).includes(expected), label);
-    await page.screenshot({ path: join(outputDirectory, 'text-' + label.replaceAll(/[^a-z]+/g, '-') + '.png') });
+    await page.screenshot({
+      path: join(outputDirectory, 'text-' + label.replaceAll(/[^a-z]+/g, '-') + '.png'),
+    });
   }
   await clickNative('sample');
   await clickNative('sample: inline-block + image');
-  for (const align of ['middle', 'top', 'bottom', 'text-top', 'text-bottom', 'sub', 'super', '25%', 'baseline']) {
+  for (const align of [
+    'middle',
+    'top',
+    'bottom',
+    'text-top',
+    'text-bottom',
+    'sub',
+    'super',
+    '25%',
+    'baseline',
+  ]) {
     await clickNative('vertical-align');
     await clickNative('vertical-align: ' + align);
   }
@@ -50,7 +77,9 @@ try {
   await clickNative('sample: mixed baselines');
   await page.screenshot({ path: join(outputDirectory, 'text-inline-final.png') });
   assert.deepEqual(errors, []);
-  console.log('PASS: five text samples, nine vertical-align values, width reflow and real Cocos rendering');
+  console.log(
+    'PASS: five text samples, nine vertical-align values, width reflow and real Cocos rendering',
+  );
 } finally {
   await browser.close();
 }

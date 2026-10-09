@@ -26,10 +26,7 @@ function countElements(node: CueNode): number {
   if (!(node instanceof CueElement)) {
     return 0;
   }
-  return 1 + node.children.reduce(
-    (count, child) => count + countElements(child),
-    0,
-  );
+  return 1 + node.children.reduce((count, child) => count + countElements(child), 0);
 }
 
 function collectText(node: CueNode): string {
@@ -48,8 +45,7 @@ const safeArea = { width: 1_000, height: 500 };
 const fittedOrthoHeight = calculateFittedOrthoHeight(viewport, safeArea);
 assert.ok(fittedOrthoHeight * 2 >= safeArea.height);
 assert.ok(
-  fittedOrthoHeight * 2 * viewport.width / viewport.height
-    >= safeArea.width - 1e-9,
+  (fittedOrthoHeight * 2 * viewport.width) / viewport.height >= safeArea.width - 1e-9,
 );
 
 const selectedPage = ref<'flex' | 'image' | 'text'>('flex');
@@ -60,48 +56,47 @@ const text = ref('  leading  spaces\nsecond\tcolumn  ');
 const textFontFamily = ref('sans-serif');
 const renderer = createCueRenderer();
 const root = new CueRootElement();
-const gallery = defineComponent(() => () => (
-  selectedPage.value === 'flex'
-    ? h(flexPlayground, {
-      containerClasses: [
-        direction.value,
-        'wrap-normal',
-        'justify-around',
-        'items-center',
-        'content-around',
-        'row-gap-12',
-        'column-gap-12',
-      ],
-      featuredItemClasses: [
-        'self-auto',
-        'grow-0',
-        'shrink-1',
-        'basis-auto',
-        'order-normal',
-        'margin-normal',
-      ],
-    })
-    : selectedPage.value === 'text'
-      ? h(textPlayground, {
-        text: text.value,
-        fontFamily: textFontFamily.value,
-        textClasses: [
-          'white-space-pre-wrap',
-          'width-200',
-          'text-align-center',
-          'font-size-20',
-          'line-height-28',
-          'font-family-monospace',
-          'text-color-sky',
+const gallery = defineComponent(
+  () => () =>
+    selectedPage.value === 'flex'
+      ? h(flexPlayground, {
+        containerClasses: [
+          direction.value,
+          'wrap-normal',
+          'justify-around',
+          'items-center',
+          'content-around',
+          'row-gap-12',
+          'column-gap-12',
+        ],
+        featuredItemClasses: [
+          'self-auto',
+          'grow-0',
+          'shrink-1',
+          'basis-auto',
+          'order-normal',
+          'margin-normal',
         ],
       })
-      : h(imagePlayground, {
-        imageClasses: [
-          imageSize.value,
-        ],
-        source: imageSource.value,
-      })
-));
+      : selectedPage.value === 'text'
+        ? h(textPlayground, {
+          text: text.value,
+          fontFamily: textFontFamily.value,
+          textClasses: [
+            'white-space-pre-wrap',
+            'width-200',
+            'text-align-center',
+            'font-size-20',
+            'line-height-28',
+            'font-family-monospace',
+            'text-color-sky',
+          ],
+        })
+        : h(imagePlayground, {
+          imageClasses: [imageSize.value],
+          source: imageSource.value,
+        }),
+);
 const app = renderer.createApp(gallery);
 app.mount(root);
 
@@ -169,7 +164,8 @@ const uuidImage = imageStage.children[0];
 assert.ok(uuidImage instanceof CueImageElement);
 assert.notEqual(uuidImage, relativeImage);
 
-/// @case The UUID source changes from a square icon to wide and small icons while the box size changes.
+/// @case The UUID source changes from a square icon to wide and small icons while the box size
+/// changes.
 /// @expect The same cue-image stays mounted; resource dimensions are not maintained by the gallery.
 for (const source of ['wide', 'small']) {
   imageSource.value = source;
@@ -184,9 +180,14 @@ assert.equal(root.children.length, 0);
 /// @case The Position page switches B from absolute to relative.
 /// @expect The same A/B/C case remains mounted without content from another gallery.
 const position = ref('position-absolute');
-const positionApp = renderer.createApp(defineComponent(() => () => h(positionPlayground, {
-  positionClasses: [position.value, 'anchor-top-left'],
-})));
+const positionApp = renderer.createApp(
+  defineComponent(
+    () => () =>
+      h(positionPlayground, {
+        positionClasses: [position.value, 'anchor-top-left'],
+      }),
+  ),
+);
 positionApp.mount(root);
 const positionRoot = root.children[0];
 assert.ok(textContentWithoutSpaces(root).startsWith('ABC'));
@@ -196,23 +197,29 @@ assert.equal(root.children[0], positionRoot);
 assert.ok(textContentWithoutSpaces(root).startsWith('ABC'));
 positionApp.unmount();
 
-/// @case Typed width/color overrides update, clear, and coexist with an important stylesheet declaration.
+/// @case Typed width/color overrides update, clear, and coexist with an important stylesheet
+/// declaration.
 /// @expect One mounted meter reflects the values and communicates the active precedence rule.
 const styleApplied = ref(true);
 const styleWidth = ref(40);
 const styleColor = ref('sky');
 const styleImportant = ref(false);
-const styleApp = renderer.createApp(defineComponent(() => () => h(styleApiPlayground, {
-  applied: styleApplied.value,
-  width: styleWidth.value,
-  color: styleColor.value,
-  important: styleImportant.value,
-})));
+const styleApp = renderer.createApp(
+  defineComponent(
+    () => () =>
+      h(styleApiPlayground, {
+        applied: styleApplied.value,
+        width: styleWidth.value,
+        color: styleColor.value,
+        important: styleImportant.value,
+      }),
+  ),
+);
 styleApp.mount(root);
 await nextTick();
 const styleRoot = root.children[0];
 assert.ok(styleRoot instanceof CueElement);
-const styleTrack = styleRoot.children.filter(child => child instanceof CueElement)[1];
+const styleTrack = styleRoot.children.filter((child) => child instanceof CueElement)[1];
 assert.ok(styleTrack instanceof CueElement);
 const meter = styleTrack.children[0];
 assert.ok(meter instanceof CueElement);
@@ -223,7 +230,12 @@ await nextTick();
 assert.equal(root.children[0], styleRoot);
 assert.ok(collectText(root).includes('Width override: 73%'));
 assert.deepEqual(meter.style.width, Length.percent(73));
-assert.deepEqual(meter.style.backgroundColor, { red: 52, green: 211, blue: 153, alpha: 1 });
+assert.deepEqual(meter.style.backgroundColor, {
+  red: 52,
+  green: 211,
+  blue: 153,
+  alpha: 1,
+});
 styleApplied.value = false;
 await nextTick();
 assert.equal(root.children[0], styleRoot);
@@ -243,11 +255,19 @@ function textContentWithoutSpaces(node: CueNode): string {
 }
 
 function findTextElement(node: CueNode, text: string): CueElement | undefined {
-  if (!(node instanceof CueElement)) return undefined;
-  if (node.children.some(child => child instanceof Text && child.data.trim() === text)) return node;
+  if (!(node instanceof CueElement)) {
+    return undefined;
+  }
+  if (
+    node.children.some((child) => child instanceof Text && child.data.trim() === text)
+  ) {
+    return node;
+  }
   for (const child of node.children) {
     const found = findTextElement(child, text);
-    if (found) return found;
+    if (found) {
+      return found;
+    }
   }
   return undefined;
 }
@@ -256,14 +276,19 @@ function findTextElement(node: CueNode, text: string): CueElement | undefined {
 /// @expect Local Vue state updates while the Input Gallery stays mounted.
 const inputMode = ref('click');
 const stopPropagation = ref(false);
-const inputApp = renderer.createApp(defineComponent(() => () => h(inputPlayground, {
-  mode: inputMode.value,
-  capture: true,
-  stopPropagation: stopPropagation.value,
-  frontPointerEvents: 'auto',
-  clipped: true,
-  transformed: true,
-})));
+const inputApp = renderer.createApp(
+  defineComponent(
+    () => () =>
+      h(inputPlayground, {
+        mode: inputMode.value,
+        capture: true,
+        stopPropagation: stopPropagation.value,
+        frontPointerEvents: 'auto',
+        clipped: true,
+        transformed: true,
+      }),
+  ),
+);
 inputApp.mount(root);
 await nextTick();
 const inputRoot = root.children[0];
@@ -287,7 +312,9 @@ const innerTarget = findTextElement(root, 'Inner bubble');
 assert.ok(innerTarget);
 innerTarget.dispatchEvent(new CueEvent('click', { bubbles: true }));
 await nextTick();
-assert.ok(collectText(root).trim().endsWith('capture: parent\ntarget: inner\nbubble: parent'));
+assert.ok(
+  collectText(root).trim().endsWith('capture: parent\ntarget: inner\nbubble: parent'),
+);
 const onceTarget = findTextElement(root, 'Once: 0');
 assert.ok(onceTarget);
 onceTarget.dispatchEvent(new CueEvent('click', { bubbles: true }));
@@ -304,7 +331,10 @@ assert.ok(collectText(root).trim().endsWith('capture: parent\ntarget: stopped'))
 
 /// @case Input Gallery switches to drag and hit-region demonstrations.
 /// @expect Every mode is isolated within the same gallery root and unmount removes all nodes.
-for (const [mode, expectedText] of [['drag', 'Drag beyond this border'], ['hit', 'Front: 0']]) {
+for (const [mode, expectedText] of [
+  ['drag', 'Drag beyond this border'],
+  ['hit', 'Front: 0'],
+]) {
   inputMode.value = mode;
   await nextTick();
   assert.equal(root.children[0], inputRoot);
