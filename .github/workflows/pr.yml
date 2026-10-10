@@ -44,12 +44,5 @@ jobs:
             pnpm install --frozen-lockfile
           )
           pnpm install --frozen-lockfile
-      - name: Build
-        run: |
-          (
-            cd ../cc-extension-cue
-            node --run build -- --filter=@bsgames/cue --filter=@bsgames/cue-compiler
-          )
-          node --run build:ci
       - name: ESLint
         run: node --run lint

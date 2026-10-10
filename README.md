@@ -61,7 +61,9 @@ download browsers during setup.
 
 ## Code checks
 
-Build the sibling Cue packages and install this workspace's dependencies before running:
+Keep the Cue repository alongside this workspace as `cc-extension-cue` and install both
+workspaces' dependencies before linting. The standalone TypeScript command also requires the
+Cue packages to be built:
 
 ```text
 node --run lint
@@ -71,7 +73,8 @@ pnpm exec tsc -p tsconfig.eslint.json
 
 The lint configuration covers TypeScript, JavaScript and `.cc.vue` scripts and templates. It uses a
 standalone TypeScript configuration so these checks do not require Creator's generated `temp`
-files. Generated project outputs and installed editor extensions are excluded.
+files. Cue package types resolve directly from the sibling repository's sources, so lint does not
+require a prior build. Generated project outputs and installed editor extensions are excluded.
 
 The standard Vue configuration from `@shrinktofit/eslint-config/vue` parses `.cc.vue` directly,
 including type-aware script checks, without a custom processor or filename adapter. Template text
@@ -83,9 +86,6 @@ promise checks and autofix source offsets.
 
 ## Pull request checks
 
-The PR workflow installs dependencies, builds and runs ESLint. It checks out `shrinktofit/cue`
-alongside this repository and builds the runtime and compiler packages used by these checks.
-`node --run build:ci` compiles every `.cc.vue` component, resolves image metadata and bundles each
-project's `src/index.ts` to `build/ci/bundle-main.js`. Cocos and package imports remain external.
-This checks the example source graphs without requiring the locally installed OMS extension.
-`node --run build` remains the full OMS development and production build described above.
+The PR workflow installs dependencies and runs `node --run lint`. It checks out `shrinktofit/cue`
+alongside this repository and installs both workspaces so type-aware lint can resolve Cue's
+source types and dependencies. No build or editor environment is required.

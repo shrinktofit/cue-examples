@@ -68,7 +68,7 @@ export default defineConfig([
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: import.meta.dirname,
-        project: './tsconfig.eslint.json',
+        project: './tsconfig.lint.json',
         extraFileExtensions: ['.vue'],
       },
     },
