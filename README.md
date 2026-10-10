@@ -64,8 +64,8 @@ download browsers during setup.
 Build the sibling Cue packages and install this workspace's dependencies before running:
 
 ```text
-pnpm lint
-pnpm test:lint
+node --run lint
+node --run test:lint
 pnpm exec tsc -p tsconfig.eslint.json
 ```
 
@@ -76,5 +76,16 @@ files. Generated project outputs and installed editor extensions are excluded.
 The standard Vue configuration from `@shrinktofit/eslint-config/vue` parses `.cc.vue` directly,
 including type-aware script checks, without a custom processor or filename adapter. Template text
 whitespace is preserved because Cue renders it literally; content-newline rules therefore do not
-apply to `.cc.vue` templates. `test:lint` verifies script rules, typed promise checks and autofix
-source offsets.
+apply to `.cc.vue` templates. The Vue line-length rule exempts lines containing literal template
+text while retaining the 100-column limit for scripts and attributes. Single-line attributes sit
+beside the tag name; multiline attributes start below it. `test:lint` verifies script rules, typed
+promise checks and autofix source offsets.
+
+## Pull request checks
+
+The PR workflow installs dependencies, builds and runs ESLint. It checks out `shrinktofit/cue`
+alongside this repository and builds the runtime and compiler packages used by these checks.
+`node --run build:ci` compiles every `.cc.vue` component, resolves image metadata and bundles each
+project's `src/index.ts` to `build/ci/bundle-main.js`. Cocos and package imports remain external.
+This checks the example source graphs without requiring the locally installed OMS extension.
+`node --run build` remains the full OMS development and production build described above.

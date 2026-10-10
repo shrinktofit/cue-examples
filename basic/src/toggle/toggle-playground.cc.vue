@@ -39,13 +39,9 @@ function record(
 </script>
 
 <template>
-  <div
-    :class="['control-gallery', { compact: width === 200 }]"
-  >
+  <div :class="['control-gallery', { compact: width === 200 }]">
     <div class="gallery-title">Toggle Gallery</div>
-    <div
-      class="gallery-note"
-    >{{
+    <div class="gallery-note">{{
       "Click or press Space. External assignment must " +
         "not emit user input."
     }}</div>
@@ -80,9 +76,7 @@ function record(
         ? events.join('\n')
         : 'No user input events yet. External writes must leave this log unchanged.'
     }}</div>
-    <div
-      class="gallery-note"
-    >{{
+    <div class="gallery-note">{{
       "Switch one instance, then disable or remount. " +
         "Values and pressed/focus states must stay " +
         "independent."

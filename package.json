@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
+    "build:ci": "node scripts/build-ci.ts",
     "test": "pnpm -r test",
     "lint": "eslint . --max-warnings=0",
     "test:lint": "node --test scripts/eslint-cue.test.ts"
@@ -12,11 +13,13 @@
   "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
   "devDependencies": {
     "@bsgames/cue": "link:../cc-extension-cue/packages/runtime",
+    "@bsgames/cue-compiler": "link:../cc-extension-cue/packages/compiler",
     "@cocos/creator-types": "3.8.7",
     "@shrinktofit/eslint-config": "^0.0.16",
     "@types/node": "^25.9.9",
     "eslint": "^10.12.0",
     "playwright-core": "^1.64.0",
+    "rollup": "^4.60.1",
     "typescript": "^6.0.3"
   }
 }

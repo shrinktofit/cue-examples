@@ -54,13 +54,9 @@ function record(
 </script>
 
 <template>
-  <div
-    :class="['control-gallery', { compact: width === 200 }]"
-  >
+  <div :class="['control-gallery', { compact: width === 200 }]">
     <div class="gallery-title">Select Gallery</div>
-    <div
-      class="gallery-note"
-    >{{
+    <div class="gallery-note">{{
       "Open, navigate and confirm a role. Escape must " +
         "cancel an uncommitted choice."
     }}</div>
@@ -97,9 +93,7 @@ function record(
         ? events.join('\n')
         : 'No user input events yet. External writes must leave this log unchanged.'
     }}</div>
-    <div
-      class="gallery-note"
-    >{{
+    <div class="gallery-note">{{
       "Choose the restricted mode to disable Engineer. " +
         "Confirm popup and focus cleanup after remount."
     }}</div>

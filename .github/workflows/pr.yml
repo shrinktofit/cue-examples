@@ -1,0 +1,55 @@
+name: PR checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: cue-examples
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: cue-examples
+      - uses: actions/checkout@v6
+        with:
+          repository: shrinktofit/cue
+          ref: main
+          path: cc-extension-cue
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: cue-examples/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: |
+            cue-examples/pnpm-lock.yaml
+            cc-extension-cue/pnpm-lock.yaml
+      - name: Install
+        run: |
+          (
+            cd ../cc-extension-cue
+            pnpm install --frozen-lockfile
+          )
+          pnpm install --frozen-lockfile
+      - name: Build
+        run: |
+          (
+            cd ../cc-extension-cue
+            node --run build -- --filter=@bsgames/cue --filter=@bsgames/cue-compiler
+          )
+          node --run build:ci
+      - name: ESLint
+        run: node --run lint
