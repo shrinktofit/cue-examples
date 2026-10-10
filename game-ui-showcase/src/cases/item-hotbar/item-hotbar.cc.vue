@@ -69,18 +69,10 @@ function onKeydown(event: CueKeyboardEvent): void {
 </script>
 
 <template>
-  <div
-    class="hotbar-case"
-  >
-    <div
-      class="hotbar-stage"
-    >
-      <div
-        class="hotbar-arena"
-      >
-        <div
-          class="hotbar-slots"
-        >
+  <div class="hotbar-case">
+    <div class="hotbar-stage">
+      <div class="hotbar-arena">
+        <div class="hotbar-slots">
           <ItemSlot
             v-for="slot in slots"
             ref="slotComponents"

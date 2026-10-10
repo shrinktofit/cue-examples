@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.eslint.json",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@bsgames/cue": ["../cc-extension-cue/packages/runtime/src/index.ts"],
+      "@bsgames/cue/host": ["../cc-extension-cue/packages/runtime/src/host/index.ts"],
+      "@bsgames/cue-control-schema": ["../cc-extension-cue/packages/control-schema/src/index.ts"],
+      "@bsgames/cue-style-schema": ["../cc-extension-cue/packages/style-schema/src/index.ts"],
+    },
+  },
+  "files": [
+    "../cc-extension-cue/packages/runtime/src/cc-env.d.ts",
+    "../cc-extension-cue/packages/runtime/src/wasm-binary.d.ts",
+  ],
+}

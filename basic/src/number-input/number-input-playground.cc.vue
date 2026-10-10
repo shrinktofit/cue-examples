@@ -41,19 +41,13 @@ function record(
 </script>
 
 <template>
-  <div
-    :class="['control-gallery', { compact: width === 200 }]"
-  >
+  <div :class="['control-gallery', { compact: width === 200 }]">
     <div class="gallery-title">NumberInput Gallery</div>
-    <div
-      class="gallery-note"
-    >{{
+    <div class="gallery-note">{{
       "Try empty, minus and decimal drafts, paste and " +
         "keyboard steps. Custom uses v-model.lazy."
     }}</div>
-    <div
-      class="sample-row"
-    >
+    <div class="sample-row">
       <div class="sample-caption">Default appearance</div>
       <cue-number-input
         v-model="defaultValue"
@@ -68,13 +62,9 @@ function record(
         @focus="record('default', $event)"
         @blur="record('default', $event)"
       />
-      <div
-        class="sample-value"
-      >Model: {{ defaultValue === undefined ? 'undefined' : defaultValue }}</div>
+      <div class="sample-value">Model: {{ defaultValue === undefined ? 'undefined' : defaultValue }}</div>
     </div>
-    <div
-      class="sample-row"
-    >
+    <div class="sample-row">
       <div class="sample-caption">Custom appearance</div>
       <cue-number-input
         v-model.lazy="customValue"
@@ -90,9 +80,7 @@ function record(
         @focus="record('custom', $event)"
         @blur="record('custom', $event)"
       />
-      <div
-        class="sample-value"
-      >Committed model: {{ customValue === undefined ? 'undefined' : customValue }}</div>
+      <div class="sample-value">Committed model: {{ customValue === undefined ? 'undefined' : customValue }}</div>
     </div>
 
     <div class="event-log">{{
@@ -100,9 +88,7 @@ function record(
         ? events.join('\n')
         : 'No user input events yet. External writes must leave this log unchanged.'
     }}</div>
-    <div
-      class="gallery-note"
-    >{{
+    <div class="gallery-note">{{
       "Bounds -10…10; step 0.5. Invalid drafts must " +
         "never publish NaN. Blur and remount must not " +
         "duplicate change."

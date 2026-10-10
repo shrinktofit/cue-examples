@@ -31,9 +31,7 @@ function activate(instance: string): void {
 </script>
 
 <template>
-  <div
-    :class="['control-gallery', { compact: width === 200 }]"
-  >
+  <div :class="['control-gallery', { compact: width === 200 }]">
     <div class="gallery-title">Button Gallery</div>
     <div class="gallery-note">Click, Enter or Space. Compare two independent counters.</div>
     <div class="sample-row">
@@ -58,9 +56,7 @@ function activate(instance: string): void {
     <div class="event-log">{{
       events.length ? events.join('\n') : 'No activation events yet.'
     }}</div>
-    <div
-      class="gallery-note"
-    >{{
+    <div class="gallery-note">{{
       "Press then move out, cancel or remount. The other " +
         "instance must keep its count."
     }}</div>

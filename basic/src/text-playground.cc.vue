@@ -17,54 +17,22 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div
-    class="text-shell"
-  >
+  <div class="text-shell">
     <div
       ref="textStage"
       :class="['text-stage', textClasses]"
     >
-      <template
-        v-if="text === 'inline-baselines'"
-      >Same line: <span
-        class="large sample-target"
-      >BIG <span
-        class="small"
-      >nested</span></span> and normal.<br>Next line keeps its own baseline.</template>
-      <template
-        v-else-if="text === 'inline-wrapping'"
-      >One <span
-        class="accent"
-      > shared <span
-        class="highlight"
-      > inline </span> flow</span>; un<span
-        class="accent"
-      >break</span>{{
+      <template v-if="text === 'inline-baselines'">Same line: <span class="large sample-target">BIG <span class="small">nested</span></span> and normal.<br>Next line keeps its own baseline.</template>
+      <template v-else-if="text === 'inline-wrapping'">One <span class="accent"> shared <span class="highlight"> inline </span> flow</span>; un<span class="accent">break</span>{{
         "able stays one word. Change width to reflow every " +
           "run."
       }}</template>
-      <template
-        v-else-if="text === 'inline-atoms'"
-      >Text <span
-        class="badge sample-target"
-      >42</span> and <cue-image
+      <template v-else-if="text === 'inline-atoms'">Text <span class="badge sample-target">42</span> and <cue-image
         class="inline-icon sample-target"
         src="uuid:59f31c06-0189-4865-a7cb-f30a36821b12@f9941"
       /> share a line.<br>Use vertical-align to move the highlighted boxes.</template>
-      <template
-        v-else-if="text === 'inline-blocks'"
-      >Before <span
-        class="accent"
-      >an inline <div
-        class="block-interruption"
-      >A block interrupts the line</div>continuation</span> after the block.</template>
-      <template
-        v-else-if="text === 'inline-flex-text'"
-      ><div
-        class="anonymous-flex"
-      >Bare text<span
-        class="badge"
-      >42</span>More text</div><br>{{
+      <template v-else-if="text === 'inline-blocks'">Before <span class="accent">an inline <div class="block-interruption">A block interrupts the line</div>continuation</span> after the block.</template>
+      <template v-else-if="text === 'inline-flex-text'"><div class="anonymous-flex">Bare text<span class="badge">42</span>More text</div><br>{{
         "Bare text becomes anonymous flex items; " +
           "align-items centers them."
       }}</template>
