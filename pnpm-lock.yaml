@@ -15,8 +15,8 @@ importers:
         specifier: 3.8.7
         version: 3.8.7
       '@shrinktofit/eslint-config':
-        specifier: ^0.0.16
-        version: 0.0.16(@typescript-eslint/parser@8.71.1(eslint@10.12.0)(typescript@6.0.3))(eslint@10.12.0)
+        specifier: ^0.0.19
+        version: 0.0.19(@typescript-eslint/parser@8.71.1(eslint@10.12.0)(typescript@6.0.3))(eslint@10.12.0)
       '@types/node':
         specifier: ^25.9.9
         version: 25.9.9
@@ -139,8 +139,8 @@ packages:
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
 
-  '@shrinktofit/eslint-config@0.0.16':
-    resolution: {integrity: sha512-ZttCATiBVIdPyFipixk3opmZtjkASjsX2PZaovR66SfXvpmFcH3VSBrfXCG2KVkMUQiCN4EUpKpmu6QYW0am0w==}
+  '@shrinktofit/eslint-config@0.0.19':
+    resolution: {integrity: sha512-JHsXX2izze5sQR+BUcwoC6w1UDjZ4XYpWI6O1haoVrxBq8fHLu+u3sHOiEHu4eTiFbiWhPUsgFrpxeJjGGd+Tg==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
     peerDependencies:
       eslint: ^10.0.0
@@ -783,7 +783,7 @@ snapshots:
 
   '@keyv/serialize@1.1.1': {}
 
-  '@shrinktofit/eslint-config@0.0.16(@typescript-eslint/parser@8.71.1(eslint@10.12.0)(typescript@6.0.3))(eslint@10.12.0)':
+  '@shrinktofit/eslint-config@0.0.19(@typescript-eslint/parser@8.71.1(eslint@10.12.0)(typescript@6.0.3))(eslint@10.12.0)':
     dependencies:
       '@eslint/js': 10.0.1(eslint@10.12.0)
       '@stylistic/eslint-plugin': 5.10.0(eslint@10.12.0)

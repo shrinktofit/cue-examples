@@ -133,7 +133,12 @@ try {
         const paintedWidth = fit === 'contain' ? naturalWidth * scale : box.width;
         const paintedHeight = fit === 'contain' ? naturalHeight * scale : box.height;
         const pixels = await page.evaluate(
-          async ({ png, box, paintedWidth, paintedHeight }) => {
+          async ({
+            png,
+            box,
+            paintedWidth,
+            paintedHeight,
+          }) => {
             const image = new Image();
             image.src = 'data:image/png;base64,' + png;
             await image.decode();
