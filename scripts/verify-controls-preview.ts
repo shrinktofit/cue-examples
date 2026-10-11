@@ -234,20 +234,25 @@ try {
     actual: unknown;
     expected: unknown;
   }> = [];
-  for (const { label, tag, value, text } of [
-    {
-      label: 'TextInput',
-      tag: 'cue-text-input',
-      value: 'Nova',
-      text: 'Nova',
-    },
-    {
-      label: 'NumberInput',
-      tag: 'cue-number-input',
-      value: 2.5,
-      text: '2.5',
-    },
-  ]) {
+  for (const {
+    label,
+    tag,
+    value,
+    text,
+  } of [
+      {
+        label: 'TextInput',
+        tag: 'cue-text-input',
+        value: 'Nova',
+        text: 'Nova',
+      },
+      {
+        label: 'NumberInput',
+        tag: 'cue-number-input',
+        value: 2.5,
+        text: '2.5',
+      },
+    ]) {
     await clickNative(label + ' Gallery');
     for (const index of [0, 1]) {
       const input = await pointerBox(tag, index);

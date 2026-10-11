@@ -13,7 +13,12 @@ import { createItemHotbar, ItemId } from './item-hotbar-state.ts';
 
 const props = defineProps<{ documentRoot: CueRootElement }>();
 const hotbar = createItemHotbar();
-const { state, slots, selected, blockedReason } = hotbar;
+const {
+  state,
+  slots,
+  selected,
+  blockedReason,
+} = hotbar;
 const paused = ref(false);
 const slotComponents = shallowRef<Array<{ focus(): void }>>([]);
 let timer: ReturnType<typeof setInterval> | undefined;
